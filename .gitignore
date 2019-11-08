@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# qmake outputs
+.qmake.stash
+moc_*.*
+Makefile
