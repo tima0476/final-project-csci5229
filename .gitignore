@@ -35,3 +35,6 @@
 .qmake.stash
 moc_*.*
 Makefile
+
+# Mac
+.DS_Store
