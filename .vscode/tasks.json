@@ -4,9 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "make",
             "type": "shell",
-            "command": "qmake CONFIG+=sdk_no_version_check;make",
+            "command": "make",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -21,7 +21,7 @@
                 "owner": "cpp",
                 "fileLocation": [
                     "relative",
-                    "${workspaceFolder}"
+                    "${workspaceRoot}"
                 ],
                 "pattern": {
                     "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
@@ -34,17 +34,52 @@
             }
         },
         {
+            "label": "clean",
+            "type": "shell",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "qmake",
+            "type": "shell",
+            "command": "qmake",
+            "args": [
+                "CONFIG+=sdk_no_version_check"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "execute",
             "type": "process",
             "command": "meadow.app/Contents/MacOS/meadow",
-            "group": "test",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
             "presentation": {
                 "echo": false,
                 "reveal": "never",
                 "showReuseMessage": false,
                 "focus": false,
                 "panel": "shared"
-            },
+            }
         }
     ]
 }
