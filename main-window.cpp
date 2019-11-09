@@ -133,7 +133,7 @@ void MainWindow::paintGL()
    glRotated(ph , 1,0,0);
    glRotated(th , 0,1,0);
 
-   //  Draw the scene
+   // TODO: Draw the scene
 
 
    //
