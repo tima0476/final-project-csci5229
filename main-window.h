@@ -12,12 +12,21 @@ class MainWindow : public QGLWidget
 Q_OBJECT //  Qt magic macro
 
 private: 
-    double x0,y0,z0;  //  Start position 
-    int th, ph;       //  Display angles
-    bool mouse;       //  Mouse pressed
-    QPoint pos;       //  Mouse position
-    double dim;       //  Display size
-    double asp;       //  Sceen aspect ratio
+    bool mouse;     //  Mouse pressed
+    int th, ph;     //  Display angles
+    QPoint pos;     //  Mouse position
+    double dim;     //  Display size
+    double asp;     //  Sceen aspect ratio
+    int sky[2];     //  Sky textures
+    double Ux;      //  Up
+    double Uy;      //  Up
+    double Uz;      //  Up
+    double Ox;      //  LookAt
+    double Oy;      //  LookAt
+    double Oz;      //  LookAt
+    double Ex;      //  Eye
+    double Ey;      //  Eye
+    double Ez;      //  Eye
 
 public:
    MainWindow(QWidget* parent=0);                        //  Constructor
@@ -40,6 +49,7 @@ protected:
     void wheelEvent(QWheelEvent*);         //  Mouse wheel
 
 private:
+    void Sky(double D);                     // Draw skybox
     void project();                        //  Set projection
 };
 

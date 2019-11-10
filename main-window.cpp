@@ -1,20 +1,36 @@
 //
 //  OpenGL MainWindow Widget
 //
+#define GL_SILENCE_DEPRECATION
+
 #include <QtOpenGL>
 #include <main-window.h>
+#include "CSCIx229.h"
 
 //
 //  Constructor
 //
-MainWindow::MainWindow(QWidget *parent) 
-    : QGLWidget(parent)
+MainWindow::MainWindow(QWidget *parent) : QGLWidget(parent)
 {
-   th = ph = 30;      //  Set intial display angles
-   asp = 1;           //  Aspect ratio
-   dim = 50;          //  World dimension
-   x0 = y0 = z0 = 1;  //  Starting location
-   mouse = 0;         //  Mouse movement
+   th = ph = 30;        //  Set intial display angles
+   asp = 1;             //  Aspect ratio
+   dim = 50;            //  World dimension
+   mouse = 0;           //  Mouse movement
+
+   // Load the sky textures
+   sky[0] = LoadTexBMP("textures/sky0.bmp");
+   sky[1] = LoadTexBMP("textures/sky1.bmp");
+
+   // Initialize the first person perspective
+   Ux = 25;             //  Up
+   Uy = 0;              //  Up
+   Uz = 0;              //  Up
+   Ox = 0;              //  LookAt
+   Oy = 0;              //  LookAt
+   Oz = 0;              //  LookAt
+   Ex = 25;             //  Eye
+   Ey = 25;             //  Eye
+   Ez = 52;             //  Eye
 }
 
 /********************************************************************/
@@ -117,6 +133,59 @@ void MainWindow::resizeGL(int width, int height)
    //  Set projection
    project();
 }
+// 
+// Draw sky box
+// 
+void MainWindow::Sky(double D)
+{
+   glColor3f(1,0,0);
+   glEnable(GL_TEXTURE_2D);
+
+   //  Sides
+   glBindTexture(GL_TEXTURE_2D,sky[0]);
+   glBegin(GL_QUADS);
+   glTexCoord2f(0.00,0); glVertex3f(-D,-D,-D);
+   glTexCoord2f(0.25,0); glVertex3f(+D,-D,-D);
+   glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
+   glTexCoord2f(0.00,1); glVertex3f(-D,+D,-D);
+
+   glColor3f(0,1,0);
+   glTexCoord2f(0.25,0); glVertex3f(+D,-D,-D);
+   glTexCoord2f(0.50,0); glVertex3f(+D,-D,+D);
+   glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
+   glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
+
+   glColor3f(0,0,1);
+   glTexCoord2f(0.50,0); glVertex3f(+D,-D,+D);
+   glTexCoord2f(0.75,0); glVertex3f(-D,-D,+D);
+   glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
+   glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
+
+   glColor3f(1,1,0);
+   glTexCoord2f(0.75,0); glVertex3f(-D,-D,+D);
+   glTexCoord2f(1.00,0); glVertex3f(-D,-D,-D);
+   glTexCoord2f(1.00,1); glVertex3f(-D,+D,-D);
+   glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
+   glEnd();
+
+   //  Top and bottom
+   glBindTexture(GL_TEXTURE_2D,sky[1]);
+   glBegin(GL_QUADS);
+   glColor3f(0,1,1);
+   glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
+   glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
+   glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
+   glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
+
+   glColor3f(1,0,1);
+   glTexCoord2f(1.0,1); glVertex3f(-D,-D,+D);
+   glTexCoord2f(0.5,1); glVertex3f(+D,-D,+D);
+   glTexCoord2f(0.5,0); glVertex3f(+D,-D,-D);
+   glTexCoord2f(1.0,0); glVertex3f(-D,-D,-D);
+   glEnd();
+
+   glDisable(GL_TEXTURE_2D);
+}
 
 //
 //  Draw the window
@@ -124,17 +193,21 @@ void MainWindow::resizeGL(int width, int height)
 void MainWindow::paintGL()
 {
    //  Clear screen and Z-buffer
+   glClearColor(0,0.3,0.7,0);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   //  Enable Z-buffering in OpenGL
+   glEnable(GL_DEPTH_TEST);
+   glEnable(GL_CULL_FACE);
 
    //  Reset transformations
    glLoadIdentity();
    
-   //  Set rotation
-   glRotated(ph , 1,0,0);
-   glRotated(th , 0,1,0);
+   //  Perspective - set eye position
+   gluLookAt(Ex,Ey,Ez , Ox,Oy,Oz , Ux,Uy,Uz);
 
-   // TODO: Draw the scene
-
+   // Draw the scene
+   Sky(3.5 * dim);
 
    //
    //  Draw Axes
@@ -154,12 +227,8 @@ void MainWindow::paintGL()
    renderText(0.0,len,0.0,"Y");
    renderText(0.0,0.0,len,"Z");
 
-   //
-   //  Emit signal with display angles and dimensions
-   //
-   // emit angles("th,ph= "+QString::number(th)+","+QString::number(ph));
-
    //  Done
+   ErrCheck("display");
    glFlush();
 }
 
@@ -171,10 +240,8 @@ void MainWindow::project()
    //  Orthogonal projection to dim
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   if (asp>1)
-      glOrtho(-dim*asp, +dim*asp, -dim, +dim, -3*dim, +3*dim);
-   else
-      glOrtho(-dim, +dim, -dim/asp, +dim/asp, -3*dim, +3*dim);
+
+   gluPerspective(55, asp, dim/64, dim*64);
 
    //  Back to model view
    glMatrixMode(GL_MODELVIEW);

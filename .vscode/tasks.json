@@ -15,7 +15,7 @@
                 "echo": true,
                 "reveal": "always",
                 "focus": false,
-                "panel": "new"
+                "panel": "shared"
             },
             "problemMatcher": {
                 "owner": "cpp",
@@ -45,7 +45,7 @@
                 "echo": true,
                 "reveal": "always",
                 "focus": false,
-                "panel": "new"
+                "panel": "shared"
             },
             "problemMatcher": []
         },
@@ -61,7 +61,7 @@
                 "echo": true,
                 "reveal": "always",
                 "focus": false,
-                "panel": "new"
+                "panel": "shared"
             },
             "problemMatcher": []
         },
