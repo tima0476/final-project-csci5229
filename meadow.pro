@@ -7,3 +7,5 @@ HEADERS = gl-widget.h main-window.h CSCIx229.h
 SOURCES = main.cpp gl-widget.cpp main-window.cpp loadtexbmp.c fatal.c errcheck.c
 #  Include OpenGL support
 QT += opengl
+
+LIBS += -lglut -lGLU
