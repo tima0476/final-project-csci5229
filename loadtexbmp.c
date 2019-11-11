@@ -32,19 +32,22 @@ unsigned int LoadTexBMP(const char* file)
    unsigned char* image;      // Image data
    unsigned int   off;        // Image offset
    unsigned int   k;          // Counter
-   // int            max;        // Maximum texture dimensions
+   int            max;        // Maximum texture dimensions
 
    //  Open file
    f = fopen(file,"rb");
    if (!f) Fatal("Cannot open file %s\n",file);
+
    //  Check image magic
    if (fread(&magic,2,1,f)!=1) Fatal("Cannot read magic from %s\n",file);
    if (magic!=0x4D42 && magic!=0x424D) Fatal("Image magic not BMP in %s\n",file);
+
    //  Read header
    if (fseek(f,8,SEEK_CUR) || fread(&off,4,1,f)!=1 ||
        fseek(f,4,SEEK_CUR) || fread(&dx,4,1,f)!=1 || fread(&dy,4,1,f)!=1 ||
        fread(&nbp,2,1,f)!=1 || fread(&bpp,2,1,f)!=1 || fread(&k,4,1,f)!=1)
      Fatal("Cannot read header from %s\n",file);
+
    //  Reverse bytes on big endian hardware (detected by backwards magic)
    if (magic==0x424D)
    {
@@ -55,10 +58,11 @@ unsigned int LoadTexBMP(const char* file)
       Reverse(&bpp,2);
       Reverse(&k,4);
    }
+
    //  Check image parameters
-   // glGetIntegerv(GL_MAX_TEXTURE_SIZE,&max);
-   // if (dx<1 || (int)dx>max) Fatal("%s image width %d out of range 1-%d\n",file,dx,max);
-   // if (dy<1 || (int)dy>max) Fatal("%s image height %d out of range 1-%d\n",file,dy,max);
+   glGetIntegerv(GL_MAX_TEXTURE_SIZE,&max);
+   if (dx<1 || (int)dx>max) Fatal("%s image width %d out of range 1-%d\n",file,dx,max);
+   if (dy<1 || (int)dy>max) Fatal("%s image height %d out of range 1-%d\n",file,dy,max);
    if (nbp!=1)  Fatal("%s bit planes is not 1: %d\n",file,nbp);
    if (bpp!=24) Fatal("%s bits per pixel is not 24: %d\n",file,bpp);
    if (k!=0)    Fatal("%s compressed files not supported\n",file);
@@ -87,12 +91,15 @@ unsigned int LoadTexBMP(const char* file)
 
    //  Sanity check
    ErrCheck("LoadTexBMP");
+
    //  Generate 2D texture
    glGenTextures(1,&texture);
    glBindTexture(GL_TEXTURE_2D,texture);
+
    //  Copy image
    glTexImage2D(GL_TEXTURE_2D,0,3,dx,dy,0,GL_RGB,GL_UNSIGNED_BYTE,image);
    if (glGetError()) Fatal("Error in glTexImage2D %s %dx%d\n",file,dx,dy);
+
    //  Scale linearly when image size doesn't match
    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
