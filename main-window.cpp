@@ -4,22 +4,22 @@
 #define GL_SILENCE_DEPRECATION
 
 #include <QtOpenGL>
-#include <main-window.h>
-#include "CSCIx229.h"
+#include "main-window.h"
 
 //
 //  Constructor
 //
 MainWindow::MainWindow(QWidget *parent) : QGLWidget(parent)
 {
+   util u;              // Create an instance of the utility class
    th = ph = 30;        //  Set intial display angles
    asp = 1;             //  Aspect ratio
    dim = 50;            //  World dimension
    mouse = 0;           //  Mouse movement
 
    // Load the sky textures
-   sky[0] = LoadTexBMP("textures/sky0.bmp");
-   sky[1] = LoadTexBMP("textures/sky1.bmp");
+   sky[0] = u.load_tex_bmp("textures/sky0.bmp");
+   sky[1] = u.load_tex_bmp("textures/sky1.bmp");
 
    // Initialize the first person perspective
    Ux = 25;             //  Up
@@ -228,7 +228,7 @@ void MainWindow::paintGL()
    renderText(0.0,0.0,len,"Z");
 
    //  Done
-   ErrCheck("display");
+   u.err_check("display");
    glFlush();
 }
 

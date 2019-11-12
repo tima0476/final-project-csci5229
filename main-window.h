@@ -6,12 +6,14 @@
 
 #include <QGLWidget>
 #include <QString>
+#include "util.h"
 
 class MainWindow : public QGLWidget
 {
 Q_OBJECT //  Qt magic macro
 
 private: 
+    util u;         // Our own private instance of the utility class will be automatically instantiated in the constructor
     bool mouse;     //  Mouse pressed
     int th, ph;     //  Display angles
     QPoint pos;     //  Mouse position
