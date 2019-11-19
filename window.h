@@ -48,22 +48,27 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QSurfaceFormat>
+#ifndef WINDOW_H
+#define WINDOW_H
 
-#include "window.h"
+#include <QWidget>
 
-int main(int argc, char *argv[])
+class GLWidget;
+
+class Window : public QWidget
 {
-    Q_INIT_RESOURCE(meadow);
+    Q_OBJECT
 
-    QApplication app(argc, argv);
+public:
+    Window();
 
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    QSurfaceFormat::setDefaultFormat(format);
+private slots:
+    void setCurrentGlWidget();
+    void rotateOneStep();
 
-    Window window;
-    window.show();
-    return app.exec();
-}
+private:
+    GLWidget *glWidget;
+    GLWidget *currentGlWidget;
+};
+
+#endif

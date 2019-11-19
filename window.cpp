@@ -48,22 +48,40 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QSurfaceFormat>
+#include <QtWidgets>
 
+#include "glwidget.h"
 #include "window.h"
 
-int main(int argc, char *argv[])
+Window::Window()
 {
-    Q_INIT_RESOURCE(meadow);
+    QGridLayout *mainLayout = new QGridLayout;
+    QColor clearColor(0,0,0,0);
 
-    QApplication app(argc, argv);
+    glWidget = new GLWidget;
+    glWidget->setClearColor(clearColor);
+    glWidget->rotateBy(+42 * 16, +42 * 16, -21 * 16);
+    mainLayout->addWidget(glWidget, 0, 0);
 
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    QSurfaceFormat::setDefaultFormat(format);
+    connect(glWidget, &GLWidget::clicked, this, &Window::setCurrentGlWidget);
+    setLayout(mainLayout);
 
-    Window window;
-    window.show();
-    return app.exec();
+    currentGlWidget = glWidget;
+
+    // QTimer *timer = new QTimer(this);
+    // connect(timer, &QTimer::timeout, this, &Window::rotateOneStep);
+    // timer->start(20);
+
+    setWindowTitle(tr("Meadow - Timothy Mason"));
+}
+
+void Window::setCurrentGlWidget()
+{
+    currentGlWidget = qobject_cast<GLWidget *>(sender());
+}
+
+void Window::rotateOneStep()
+{
+    if (currentGlWidget)
+        currentGlWidget->rotateBy(+2 * 16, +2 * 16, -1 * 16);
 }

@@ -48,22 +48,51 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QSurfaceFormat>
+#ifndef GLWIDGET_H
+#define GLWIDGET_H
 
-#include "window.h"
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QOpenGLBuffer>
 
-int main(int argc, char *argv[])
+QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram);
+QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
+
+class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 {
-    Q_INIT_RESOURCE(meadow);
+    Q_OBJECT
 
-    QApplication app(argc, argv);
+public:
+    using QOpenGLWidget::QOpenGLWidget;
+    ~GLWidget();
 
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    QSurfaceFormat::setDefaultFormat(format);
+    QSize minimumSizeHint() const override;
+    QSize sizeHint() const override;
+    void rotateBy(int xAngle, int yAngle, int zAngle);
+    void setClearColor(const QColor &color);
 
-    Window window;
-    window.show();
-    return app.exec();
-}
+signals:
+    void clicked();
+
+protected:
+    void initializeGL() override;
+    void paintGL() override;
+    void resizeGL(int width, int height) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+private:
+    void makeObject();
+
+    QColor clearColor = Qt::black;
+    QPoint lastPos;
+    int xRot = 0;
+    int yRot = 0;
+    int zRot = 0;
+    QOpenGLTexture *textures[2] = {nullptr, nullptr};
+    QOpenGLShaderProgram *program = nullptr;
+    QOpenGLBuffer vbo;
+};
+
+#endif

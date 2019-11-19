@@ -27,7 +27,7 @@
             "name": "(lldb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/meadow",
+            "program": "${workspaceFolder}/meadow.app/Contents/MacOS/meadow",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
