@@ -39,3 +39,4 @@ Makefile
 # Mac
 .DS_Store
 meadow
+qrc_meadow.cpp
