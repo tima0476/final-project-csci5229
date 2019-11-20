@@ -90,7 +90,7 @@ void GLWidget::setClearColor(const QColor &color)
 void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
-    makeObject();
+    makeSkyCube();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
@@ -167,61 +167,50 @@ void GLWidget::paintGL()
         glDrawArrays(GL_TRIANGLE_FAN, i * 4, 4);
     }
 }
-void GLWidget::makeObject()
+void GLWidget::makeSkyCube()
 {
-    static const int coords[6][4][3] = {
-        { { +1, -1, -1 }, { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 } },     // rear face (z=-1)
-        { { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 } },     // top face (y=1)
-        { { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 } },     // right face (x=1)
-        { { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 } },     // left face (x=-1)
-        { { +1, -1, +1 }, { -1, -1, +1 }, { -1, -1, -1 }, { +1, -1, -1 } },     // bottom face (y=-1)
-        { { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }, { -1, +1, +1 } }      // front face (z=1)
-    };
-
+    // Load the skycube textures
     for (int j = 0; j < 2; ++j)
         textures[j] = new QOpenGLTexture(QImage(QString(":/textures/sky%1.png").arg(j)).mirrored());
+
+    #define SC_A    {-1, +1, -1}
+    #define SC_B    {+1, +1, -1}
+    #define SC_C    {+1, -1, -1}
+    #define SC_D    {-1, -1, -1}
+    #define SC_E    {-1, +1, +1}
+    #define SC_F    {+1, +1, +1}
+    #define SC_G    {+1, -1, +1}
+    #define SC_H    {-1, -1, +1}
+    
+    static const int cube_coords[6][4][3] = {
+        { SC_A, SC_D, SC_C, SC_B },     // Rear
+        { SC_B, SC_C, SC_G, SC_F },     // Right
+        { SC_F, SC_G, SC_H, SC_E },     // Front
+        { SC_E, SC_H, SC_D, SC_A },     // Left
+        { SC_A, SC_B, SC_F, SC_E },     // Top
+        { SC_G, SC_C, SC_D, SC_H }      // Bottom
+    };
+
+    static const GLfloat tex_coords[6][4][2] = {
+        { {0   , 1}, {0   , 0}, {0.25, 0}, {0.25, 1} },
+        { {0.25, 1}, {0.25, 0}, {0.5 , 0}, {0.5 , 1} },
+        { {0.5 , 1}, {0.5 , 0}, {0.75, 0}, {0.75, 1} },
+        { {0.75, 1}, {0.75, 0}, {1   , 0}, {1   , 1} },
+        { {0   , 1}, {0   , 0}, {0.5 , 0}, {0.5 , 1} },
+        { {0.5 , 1}, {0.5 , 0}, {1   , 0}, {1   , 1} }
+    };
 
     QVector<GLfloat> vertData;
     for (int i = 0; i < 6; ++i) {                       // 6 faces per cube
         for (int j = 0; j < 4; ++j) {                   // 4 vertices per face
             // vertex position
-            vertData.append(0.2 * coords[i][j][0]);     // x coord
-            vertData.append(0.2 * coords[i][j][1]);     // y coord
-            vertData.append(0.2 * coords[i][j][2]);     // z coord
+            vertData.append(0.2 * cube_coords[i][j][0]);     // x coord
+            vertData.append(0.2 * cube_coords[i][j][1]);     // y coord
+            vertData.append(0.2 * cube_coords[i][j][2]);     // z coord
             
             // texture coordinate
-            switch (i)
-            {
-            case 0:             // rear face = sky0 0 .. 0.25
-                vertData.append(0.25*(j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            
-            case 1:             // top face = sky1 right side
-                vertData.append(0.5 + 0.5 * (j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            
-            case 2:             // right face = sky0 0.25 .. 0.5
-                vertData.append(0.25+0.25*(j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            
-            case 3:             // left face = sky0 0.75 .. 1.0
-                vertData.append(0.75+0.25*(j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            
-            case 4:             // bottom face = left right side
-                vertData.append(0.5*(j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            
-            case 5:             // front face = sky0 0.5 .. 0.75
-                vertData.append(0.5+0.25*(j == 0 || j == 3));
-                vertData.append(j == 0 || j == 1);
-                break;
-            }
+            vertData.append(tex_coords[i][j][0]);   // Texture x coord
+            vertData.append(tex_coords[i][j][1]);   // Texture y coord 
         }
     }
 

@@ -83,7 +83,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 private:
-    void makeObject();
+    void makeSkyCube();
 
     QColor clearColor = Qt::black;
     QPoint lastPos;
