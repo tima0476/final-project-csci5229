@@ -1,9 +1,18 @@
-HEADERS       = glwidget.h \
-                window.h
-SOURCES       = glwidget.cpp \
-                main.cpp \
-                window.cpp
+QT       += core gui widgets
 
-RESOURCES     = meadow.qrc
+TARGET = meadow
+TEMPLATE = app
 
-QT           += widgets
+SOURCES += main.cpp
+
+SOURCES += \
+    mainwidget.cpp \
+    geometryengine.cpp
+
+HEADERS += \
+    mainwidget.h \
+    geometryengine.h
+
+RESOURCES += \
+    shaders.qrc \
+    textures.qrc
