@@ -59,9 +59,10 @@
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
-    texture(0),
     angularSpeed(0)
 {
+    for (int i = 0; i < 2; i++)
+        texture[i] = NULL;
 }
 
 MainWidget::~MainWidget()
@@ -69,7 +70,9 @@ MainWidget::~MainWidget()
     // Make sure the context is current when deleting the texture
     // and the buffers.
     makeCurrent();
-    delete texture;
+    for (int i = 0; i < 2; i++)
+        delete texture[i];
+    
     delete geometries;
     doneCurrent();
 }
@@ -168,24 +171,28 @@ void MainWidget::initShaders()
 void MainWidget::initTextures()
 {
     // Load cube.png image
-    texture = new QOpenGLTexture(QImage(":/cube.png").mirrored());
+    texture[0] = new QOpenGLTexture(QImage(":/textures/sky0.png").mirrored());
+    texture[1] = new QOpenGLTexture(QImage(":/textures/sky1.png").mirrored());
 
-    // Set nearest filtering mode for texture minification
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
+    for (int i = 0; i < 2; i++)
+    {
+        // Set nearest filtering mode for texture minification
+        texture[i]->setMinificationFilter(QOpenGLTexture::Nearest);
 
-    // Set bilinear filtering mode for texture magnification
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+        // Set bilinear filtering mode for texture magnification
+        texture[i]->setMagnificationFilter(QOpenGLTexture::Linear);
 
-    // Wrap texture coordinates by repeating
-    // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-    texture->setWrapMode(QOpenGLTexture::Repeat);
+        // Wrap texture coordinates by repeating
+        // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
+        texture[i]->setWrapMode(QOpenGLTexture::Repeat);\
+    }
 }
 //! [4]
 
 //! [5]
 void MainWidget::resizeGL(int w, int h)
 {
-    // Calculate aspect ratio
+    // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
     // Set near plane to 3/16, far plane to 3*16, field of view 55 degrees
@@ -204,7 +211,6 @@ void MainWidget::paintGL()
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    texture->bind();
 
 //! [6]
     // Calculate model view transformation
@@ -216,9 +222,14 @@ void MainWidget::paintGL()
     program.setUniformValue("mvp_matrix", projection * matrix);
 //! [6]
 
-    // Use texture unit 0 which contains cube.png
+    // Use texture unit 0
     program.setUniformValue("texture", 0);
 
-    // Draw cube geometry
-    geometries->drawCubeGeometry(&program);
+    for (int i = 0; i < 2; i++)
+    {
+        texture[i]->bind();
+
+        // Draw cube geometry
+        geometries->drawCubeGeometry(&program, i);
+    }
 }

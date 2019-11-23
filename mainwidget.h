@@ -89,7 +89,7 @@ private:
     QOpenGLShaderProgram program;
     GeometryEngine *geometries;
 
-    QOpenGLTexture *texture;
+    QOpenGLTexture *texture[2];
 
     QMatrix4x4 projection;
 

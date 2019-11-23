@@ -40,3 +40,4 @@ Makefile
 .DS_Store
 meadow
 qrc_meadow.cpp
+qrc_textures.cpp
