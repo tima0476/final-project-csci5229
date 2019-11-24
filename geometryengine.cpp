@@ -1,50 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtCore module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:BSD$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** BSD License Usage
-** Alternatively, you may use this file under the terms of the BSD license
-** as follows:
-**
-** "Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are
-** met:
-**   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
-**   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
-**   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
-**
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-**
-** $QT_END_LICENSE$
+** Adapted from "cube" example code from the Qt library
+**   https://doc.qt.io/qt-5/qtopengl-cube-example.html
 **
 ****************************************************************************/
 
@@ -59,80 +16,67 @@ struct VertexData
     QVector2D texCoord;
 };
 
-//! [0]
-GeometryEngine::GeometryEngine()
+GeometryEngine::GeometryEngine() :
+        skyFacetsBuf(QOpenGLBuffer::IndexBuffer)
 {
     initializeOpenGLFunctions();
 
     // Generate VBOs
-    for (int i = 0; i < 2; i++)
-    {   arrayBuf[i] = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-        arrayBuf[i]->create();
-
-        indexBuf[i] = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-        indexBuf[i]->create();
-    }
+    skyVertBuf.create();
+    skyFacetsBuf.create();
 
     // Initializes cube geometry and transfers it to VBOs
-    initCubeGeometry();
+    initSkyCubeGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
 {
-    for (int i = 0; i < 2; i++)
-    {
-        arrayBuf[i]->destroy();
-        delete arrayBuf[i];
-
-        indexBuf[i]->destroy();
-        delete indexBuf[i];
-    }
+    skyVertBuf.destroy();
+    skyFacetsBuf.destroy();
 }
-//! [0]
 
-void GeometryEngine::initCubeGeometry()
+void GeometryEngine::initSkyCubeGeometry()
 {
     // For cube we would need only 8 vertices but we have to
     // duplicate vertex for each face because texture coordinate
     // is different.  Split cube into two sets of faces due to textures
     // being split between two separate image files
-    VertexData vertices0[] = {
+    VertexData vertices[] = {
         // Vertex data for face 0  (Front)
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.75f, 0.00f)}, // v0
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.50f, 0.00f)}, // v1
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.75f, 1.00f)}, // v2
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.50f, 1.00f)}, // v3
+        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(1.00f, 0.334f)}, // v0
+        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.75f, 0.334f)}, // v1
+        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(1.00f, 0.666)}, // v2
+        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.75f, 0.666)}, // v3
 
         // Vertex data for face 1  (Right)
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.50f, 0.00f)}, // v4
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.25f, 0.00f)}, // v5
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.50f, 1.00f)}, // v6
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.25f, 1.00f)}, // v7
+        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.75f, 0.334f)}, // v4
+        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 0.334f)}, // v5
+        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.75f, 0.666)}, // v6
+        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 0.666)}, // v7
 
         // Vertex data for face 2  (Rear)
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.25f, 0.00f)}, // v8
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.00f, 0.00f)}, // v9
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.25f, 1.00f)}, // v10
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.00f, 1.00f)}, // v11
+        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 0.334f)}, // v8
+        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 0.334f)}, // v9
+        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 0.666)}, // v10
+        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 0.666)}, // v11
 
         // Vertex data for face 3  (Left)
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(1.00f, 0.00f)}, // v12
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.75f, 0.00f)}, // v13
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(1.00f, 1.00f)}, // v14
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.75f, 1.00f)}  // v15
-    };
-    VertexData vertices1[] = {
+        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 0.334f)}, // v12
+        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.00f, 0.334f)}, // v13
+        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 0.666)}, // v14
+        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.00f, 0.666)}, // v15
+
         // Vertex data for face 4  (Bottom)
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(1.00f, 0.00f)}, // 0
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 0.00f)}, // 1
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(1.00f, 1.00f)}, // 2
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.50f, 1.00f)}, // 3
+        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 0.334f)}, // v16
+        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 0.334f)}, // v17
+        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.25f, 0.0f)},        // v18
+        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.50f, 0.0f)},        // v19
 
         // Vertex data for face 5  (Top)
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.50f, 1.00f)}, // 4
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.50f, 0.00f)}, // 5
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.00f, 1.00f)}, // 6
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.00f, 0.00f)}  // 7
+        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.25f, 1.0f)},        // v20
+        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.50f, 1.0f)},        // v21
+        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 0.666)}, // v22
+        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 0.666)}  // v23
     };
 
     // Indices for drawing cube faces using triangle strips.
@@ -152,37 +96,27 @@ void GeometryEngine::initCubeGeometry()
     // |/|/|/|/|  =>
     // 1-3-5-7-9  =>
 
-
-    GLushort indices0[] = {
-         1,  0,  3,  2,  2,     // Face 0 (Front)  - triangle strip ( v0.1,  v0.0,  v0.3,  v0.2)
-         5,  5,  4,  7,  6,  6, // Face 1 (Right)  - triangle strip ( v0.5,  v0.4,  v0.7,  v0.6)
-         9,  9,  8, 11, 10, 10, // Face 2 (Rear)   - triangle strip ( v0.9,  v0.8, v0.11, v0.10)
-        13, 13, 12, 15, 14      // Face 3 (Left)   - triangle strip (v0.13, v0.12, v0.15, v0.14)
-    };
-    GLushort indices1[] = {
-         1,  0,  3,  2,  2,     // Face 4 (Bottom) - triangle strip ( v1.1,  v1.0,  v1.3,  v1.2)
-         5,  5,  4,  7,  6      // Face 5 (Top)    - triangle strip ( v1.5,  v1.4,  v1.7,  v1.6)
+    GLushort indices[] = {
+         1,  0,  3,  2,  2,     // Face 0 (Front)
+         5,  5,  4,  7,  6,  6, // Face 1 (Right)
+         9,  9,  8, 11, 10, 10, // Face 2 (Rear)
+        13, 13, 12, 15, 14, 14, // Face 3 (Left)
+        17, 17, 16, 19, 18, 18, // Face 4 (Bottom)
+        21, 21, 20, 23, 22      // Face 5 (Top)
     };
 
-    arrayBuf[0]->bind();
-    arrayBuf[0]->allocate(vertices0, sizeof(vertices0));
+    skyVertBuf.bind();
+    skyVertBuf.allocate(vertices, sizeof(vertices));
 
-    indexBuf[0]->bind();
-    indexBuf[0]->allocate(indices0, sizeof(indices0));
-
-    arrayBuf[1]->bind();
-    arrayBuf[1]->allocate(vertices1, sizeof(vertices1));
-
-    indexBuf[1]->bind();
-    indexBuf[1]->allocate(indices1, sizeof(indices1));
+    skyFacetsBuf.bind();
+    skyFacetsBuf.allocate(indices, sizeof(indices));
 }
 
-//! [2]
-void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program, int set)
+void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
-    arrayBuf[set]->bind();
-    indexBuf[set]->bind();
+    skyVertBuf.bind();
+    skyFacetsBuf.bind();
 
     // Offset for position
     quintptr offset = 0;
@@ -201,6 +135,5 @@ void GeometryEngine::drawCubeGeometry(QOpenGLShaderProgram *program, int set)
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(VertexData));
 
     // Draw cube geometry using indices from VBO 1
-    glDrawElements(GL_TRIANGLE_STRIP, indexBuf[set]->size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, skyFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
 }
-//! [2]

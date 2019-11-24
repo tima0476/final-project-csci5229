@@ -1,8 +1,9 @@
-#ifdef GL_ES
-// Set default precision to medium
-precision mediump int;
-precision mediump float;
-#endif
+/****************************************************************************
+**
+** Adapted from "cube" example code from the Qt library
+**   https://doc.qt.io/qt-5/qtopengl-cube-example.html
+**
+****************************************************************************/
 
 uniform mat4 mvp_matrix;
 
@@ -11,7 +12,6 @@ attribute vec2 a_texcoord;
 
 varying vec2 v_texcoord;
 
-//! [0]
 void main()
 {
     // Calculate vertex position in screen space
@@ -21,4 +21,3 @@ void main()
     // Value will be automatically interpolated to fragments inside polygon faces
     v_texcoord = a_texcoord;
 }
-//! [0]

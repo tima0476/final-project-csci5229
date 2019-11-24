@@ -1,54 +1,10 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtCore module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:BSD$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** BSD License Usage
-** Alternatively, you may use this file under the terms of the BSD license
-** as follows:
-**
-** "Redistribution and use in source and binary forms, with or without
-** modification, are permitted provided that the following conditions are
-** met:
-**   * Redistributions of source code must retain the above copyright
-**     notice, this list of conditions and the following disclaimer.
-**   * Redistributions in binary form must reproduce the above copyright
-**     notice, this list of conditions and the following disclaimer in
-**     the documentation and/or other materials provided with the
-**     distribution.
-**   * Neither the name of The Qt Company Ltd nor the names of its
-**     contributors may be used to endorse or promote products derived
-**     from this software without specific prior written permission.
-**
-**
-** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-** "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-** LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-** A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-** OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-** LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-** OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-**
-** $QT_END_LICENSE$
+** Adapted from "cube" example code from the Qt library
+**   https://doc.qt.io/qt-5/qtopengl-cube-example.html
 **
 ****************************************************************************/
 
-// https://doc.qt.io/qt-5/qtopengl-cube-example.html
 
 #include "mainwidget.h"
 
@@ -59,10 +15,9 @@
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
+    texture(NULL),
     angularSpeed(0)
 {
-    for (int i = 0; i < 2; i++)
-        texture[i] = NULL;
 }
 
 MainWidget::~MainWidget()
@@ -70,14 +25,12 @@ MainWidget::~MainWidget()
     // Make sure the context is current when deleting the texture
     // and the buffers.
     makeCurrent();
-    for (int i = 0; i < 2; i++)
-        delete texture[i];
-    
+    delete texture;
     delete geometries;
     doneCurrent();
 }
 
-//! [0]
+
 void MainWidget::mousePressEvent(QMouseEvent *e)
 {
     // Save mouse press position
@@ -102,9 +55,9 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *e)
     // Increase angular speed
     angularSpeed += acc;
 }
-//! [0]
 
-//! [1]
+
+
 void MainWidget::timerEvent(QTimerEvent *)
 {
     // Decrease angular speed (friction)
@@ -121,24 +74,24 @@ void MainWidget::timerEvent(QTimerEvent *)
         update();
     }
 }
-//! [1]
+
 
 void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0, 0, 0, 1);
+    glClearColor(71.0/255.0, 100.0/255.0, 158.0/255.0, 1);   // Custom color for the sky cube to hide gaps in the seams
 
     initShaders();
     initTextures();
 
-//! [2]
+
     // Enable depth buffer
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
     glEnable(GL_CULL_FACE);
-//! [2]
+
 
     geometries = new GeometryEngine;
 
@@ -146,7 +99,7 @@ void MainWidget::initializeGL()
     timer.start(12, this);
 }
 
-//! [3]
+
 void MainWidget::initShaders()
 {
     // Compile vertex shader
@@ -165,31 +118,28 @@ void MainWidget::initShaders()
     if (!program.bind())
         close();
 }
-//! [3]
 
-//! [4]
+
+
 void MainWidget::initTextures()
 {
     // Load cube.png image
-    texture[0] = new QOpenGLTexture(QImage(":/textures/sky0.png").mirrored());
-    texture[1] = new QOpenGLTexture(QImage(":/textures/sky1.png").mirrored());
+    // texture = new QOpenGLTexture(QImage(":/textures/de99948e-1404-476b-a417-1b3b30e47e53_01.jpg").mirrored());    // mirrored() corrects QImage / OpenGL coordinate system difference
+    texture = new QOpenGLTexture(QImage(":/textures/de99948e-1404-476b-a417-1b3b30e47e53_01.jpg").mirrored());    // mirrored() corrects QImage / OpenGL coordinate system difference
 
-    for (int i = 0; i < 2; i++)
-    {
-        // Set nearest filtering mode for texture minification
-        texture[i]->setMinificationFilter(QOpenGLTexture::Nearest);
+    // Set nearest filtering mode for texture minification
+    texture->setMinificationFilter(QOpenGLTexture::Nearest);
 
-        // Set bilinear filtering mode for texture magnification
-        texture[i]->setMagnificationFilter(QOpenGLTexture::Linear);
+    // Set bilinear filtering mode for texture magnification
+    texture->setMagnificationFilter(QOpenGLTexture::Linear);
 
-        // Wrap texture coordinates by repeating
-        // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-        texture[i]->setWrapMode(QOpenGLTexture::Repeat);\
-    }
+    // Wrap texture coordinates by repeating
+    // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
+    texture->setWrapMode(QOpenGLTexture::Repeat);
 }
-//! [4]
 
-//! [5]
+
+
 void MainWidget::resizeGL(int w, int h)
 {
     // Calculate aspect ratio to keep pixels square
@@ -204,7 +154,7 @@ void MainWidget::resizeGL(int w, int h)
     // Set perspective projection
     projection.perspective(fov, aspect, zNear, zFar);
 }
-//! [5]
+
 
 void MainWidget::paintGL()
 {
@@ -212,24 +162,21 @@ void MainWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-//! [6]
+
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    matrix.translate(0.0, 0.0, -5.0);
+    // matrix.translate(0.0, 0.0, -10.0);
     matrix.rotate(rotation);
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
-//! [6]
+
 
     // Use texture unit 0
     program.setUniformValue("texture", 0);
 
-    for (int i = 0; i < 2; i++)
-    {
-        texture[i]->bind();
+    texture->bind();
 
-        // Draw cube geometry
-        geometries->drawCubeGeometry(&program, i);
-    }
+    // Draw cube geometry
+    geometries->drawSkyCubeGeometry(&program);
 }
