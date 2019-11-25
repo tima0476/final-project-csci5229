@@ -124,8 +124,12 @@ void MainWidget::initShaders()
 void MainWidget::initTextures()
 {
     // Load cube.png image
-    // texture = new QOpenGLTexture(QImage(":/textures/de99948e-1404-476b-a417-1b3b30e47e53_01.jpg").mirrored());    // mirrored() corrects QImage / OpenGL coordinate system difference
-    texture = new QOpenGLTexture(QImage(":/textures/de99948e-1404-476b-a417-1b3b30e47e53_01.jpg").mirrored());    // mirrored() corrects QImage / OpenGL coordinate system difference
+    // texture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());                    // Mountain swampy
+    texture = new QOpenGLTexture(QImage(":/textures/2374281533.jpeg").mirrored());                 // Mountain Lake
+    // texture = new QOpenGLTexture(QImage(":/textures/2721839643.jpg").mirrored());           // Rocky Mountainous Desert
+    // texture = new QOpenGLTexture(QImage(":/textures/skyboxsun25degtest.png").mirrored());       // Flat, arid desert
+    // texture = new QOpenGLTexture(QImage(":/textures/stormydays_large.jpg").mirrored());             // Golden sunset
+    // texture = new QOpenGLTexture(QImage(":/textures/violentdays_large.jpg").mirrored());        // Fiery sunset
 
     // Set nearest filtering mode for texture minification
     texture->setMinificationFilter(QOpenGLTexture::Nearest);
@@ -161,11 +165,9 @@ void MainWidget::paintGL()
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    // matrix.translate(0.0, 0.0, -10.0);
+    // matrix.translate(0.0, 10.4, 0.0);
     matrix.rotate(rotation);
 
     // Set modelview-projection matrix

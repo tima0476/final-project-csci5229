@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/">
-        <file>textures/de99948e-1404-476b-a417-1b3b30e47e53_01.jpg</file>
+        <file>textures/2226.webp</file>
+        <file>textures/2374281533.jpeg</file>
+        <file>textures/2721839643.jpg</file>
+        <file>textures/skyboxsun25degtest.png</file>
+        <file>textures/stormydays_large.jpg</file>
+        <file>textures/violentdays_large.jpg</file>
     </qresource>
 </RCC>
