@@ -41,4 +41,4 @@ Makefile
 meadow
 qrc_meadow.cpp
 qrc_textures.cpp
-
+qrc_shaders.cpp
