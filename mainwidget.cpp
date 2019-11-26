@@ -15,64 +15,75 @@
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
-    texture(NULL),
-    angularSpeed(0)
+    skyTexture(NULL),
+    eyePosition(0,0,0),
+    lookDir(0,0,-1),
+    th(180.0f)
 {
+    // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
+    setMouseTracking(false);
+
+    //  Set window title
+    setWindowTitle("meadow - Timothy Mason");
 }
 
 MainWidget::~MainWidget()
 {
-    // Make sure the context is current when deleting the texture
+    // Make sure the context is current when deleting the skyTexture
     // and the buffers.
     makeCurrent();
-    delete texture;
+    delete skyTexture;
     delete geometries;
     doneCurrent();
 }
 
+void MainWidget::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key()) {
+        case Qt::Key_W:
+            // Move forward
+            eyePosition += lookDir/10.0;
+
+            // OpenGL Redraw
+            update();
+            break;
+
+        case Qt::Key_S:
+            // Move forward
+            eyePosition -= lookDir/10.0;
+
+            // OpenGL Redraw
+            update();
+            break;
+
+        default:
+            QOpenGLWidget::keyPressEvent(e);
+    }
+}
+
+void MainWidget::mouseMoveEvent(QMouseEvent *e)
+{
+    // 1 mouse pixel of L/R movement = 1 degree of theta rotation
+    th += e->localPos().x() - mouseLastPosition.x();
+    th = fmod(th, 360.0f);
+        
+    // Update the direction we're looking for the new rotation
+    lookDir.setX(Sin(-th));
+    lookDir.setY(0.0f);
+    lookDir.setZ(Cos(-th));
+
+
+    // Save the current mouse position so we can calculate a delta on the next mouse move
+    mouseLastPosition = QVector2D(e->localPos());
+
+    // Request an OpenGL update
+    update();
+}
 
 void MainWidget::mousePressEvent(QMouseEvent *e)
 {
-    // Save mouse press position
-    mousePressPosition = QVector2D(e->localPos());
-}
-
-void MainWidget::mouseReleaseEvent(QMouseEvent *e)
-{
-    // Mouse release position - mouse press position
-    QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
-
-    // Rotation axis is perpendicular to the mouse position difference
-    // vector
-    QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
-
-    // Accelerate angular speed relative to the length of the mouse sweep
-    qreal acc = diff.length() / 100.0;
-
-    // Calculate new rotation axis as weighted sum
-    rotationAxis = (rotationAxis * angularSpeed + n * acc).normalized();
-
-    // Increase angular speed
-    angularSpeed += acc;
-}
-
-
-
-void MainWidget::timerEvent(QTimerEvent *)
-{
-    // Decrease angular speed (friction)
-    angularSpeed *= 0.99;
-
-    // Stop rotation when speed goes below threshold
-    if (angularSpeed < 0.01) {
-        angularSpeed = 0.0;
-    } else {
-        // Update rotation
-        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
-
-        // Request an update
-        update();
-    }
+    // Start of a mouse move - save initial mouse position
+    mouseLastPosition = QVector2D(e->localPos());
 }
 
 
@@ -80,7 +91,7 @@ void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(71.0/255.0, 100.0/255.0, 158.0/255.0, 1);   // Custom color for the sky cube to hide gaps in the seams
+    glClearColor(0,0,0,1);
 
     initShaders();
     initTextures();
@@ -94,9 +105,6 @@ void MainWidget::initializeGL()
 
 
     geometries = new GeometryEngine;
-
-    // Use QBasicTimer because its faster than QTimer
-    timer.start(12, this);
 }
 
 
@@ -124,22 +132,23 @@ void MainWidget::initShaders()
 void MainWidget::initTextures()
 {
     // Load cube.png image
-    // texture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());                    // Mountain swampy
-    texture = new QOpenGLTexture(QImage(":/textures/2374281533.jpeg").mirrored());                 // Mountain Lake
-    // texture = new QOpenGLTexture(QImage(":/textures/2721839643.jpg").mirrored());           // Rocky Mountainous Desert
-    // texture = new QOpenGLTexture(QImage(":/textures/skyboxsun25degtest.png").mirrored());       // Flat, arid desert
-    // texture = new QOpenGLTexture(QImage(":/textures/stormydays_large.jpg").mirrored());             // Golden sunset
-    // texture = new QOpenGLTexture(QImage(":/textures/violentdays_large.jpg").mirrored());        // Fiery sunset
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());                    // Mountain swampy
+    skyTexture = new QOpenGLTexture(QImage(":/textures/2374281533.jpeg").mirrored());                 // Mountain Lake
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/DEBUG 2374281533.webp").mirrored());                 // Mountain Lake
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/2721839643.jpg").mirrored());           // Rocky Mountainous Desert
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/skyboxsun25degtest.png").mirrored());       // Flat, arid desert
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/stormydays_large.jpg").mirrored());             // Golden sunset
+    // skyTexture = new QOpenGLTexture(QImage(":/textures/violentdays_large.jpg").mirrored());        // Fiery sunset
 
     // Set nearest filtering mode for texture minification
-    texture->setMinificationFilter(QOpenGLTexture::Nearest);
+    skyTexture->setMinificationFilter(QOpenGLTexture::Nearest);
 
     // Set bilinear filtering mode for texture magnification
-    texture->setMagnificationFilter(QOpenGLTexture::Linear);
+    skyTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Wrap texture coordinates by repeating
     // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
-    texture->setWrapMode(QOpenGLTexture::Repeat);
+    skyTexture->setWrapMode(QOpenGLTexture::Repeat);
 }
 
 
@@ -149,8 +158,8 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    // Set near plane to 3/16, far plane to 3*16, field of view 55 degrees
-    const qreal zNear = 3.0/16.0, zFar = 3.0*16.0, fov = 55.0;
+    // Set near plane to 3/16, far plane to 3*16, field of view 45 degrees
+    const qreal zNear = 3.0/16.0, zFar = 3.0*16.0, fov = 45.0;
 
     // Reset projection
     projection.setToIdentity();
@@ -167,8 +176,8 @@ void MainWidget::paintGL()
 
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    // matrix.translate(0.0, 10.4, 0.0);
-    matrix.rotate(rotation);
+
+    matrix.lookAt(eyePosition, eyePosition+lookDir, QVector3D(0,1,0));
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
@@ -177,7 +186,7 @@ void MainWidget::paintGL()
     // Use texture unit 0
     program.setUniformValue("texture", 0);
 
-    texture->bind();
+    skyTexture->bind();
 
     // Draw cube geometry
     geometries->drawSkyCubeGeometry(&program);

@@ -19,6 +19,10 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 
+//  Cosine and Sine in degrees
+#define Cos(x) (cos((x)*3.1415926/180.0))
+#define Sin(x) (sin((x)*3.1415926/180.0))
+
 class GeometryEngine;
 
 class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
@@ -30,10 +34,10 @@ public:
     ~MainWidget();
 
 protected:
+    void mouseMoveEvent(QMouseEvent *e) override;
     void mousePressEvent(QMouseEvent *e) override;
-    void mouseReleaseEvent(QMouseEvent *e) override;
-    void timerEvent(QTimerEvent *e) override;
-
+    void keyPressEvent(QKeyEvent *e) override;
+    
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
@@ -42,18 +46,17 @@ protected:
     void initTextures();
 
 private:
-    QBasicTimer timer;
     QOpenGLShaderProgram program;
     GeometryEngine *geometries;
 
-    QOpenGLTexture *texture;
+    QOpenGLTexture *skyTexture;
 
     QMatrix4x4 projection;
 
-    QVector2D mousePressPosition;
-    QVector3D rotationAxis;
-    qreal angularSpeed;
-    QQuaternion rotation;
+    QVector2D mouseLastPosition;
+    QVector3D eyePosition;
+    QVector3D lookDir;
+    float th;
 };
 
 #endif // MAINWIDGET_H
