@@ -16,7 +16,7 @@ MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     skyTexture(NULL),
-    viewerPos(0,-1.5,0),
+    viewerPos(0,0,0),
     lookDir(0,0,-1),
     th(0.0f), ph(0.0f)
 {
@@ -146,7 +146,6 @@ void MainWidget::initTextures()
     landTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Wrap texture coordinates by repeating
-    // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
     skyTexture->setWrapMode(QOpenGLTexture::Repeat);
     landTexture->setWrapMode(QOpenGLTexture::Repeat);
 }
@@ -158,8 +157,8 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    // Set near plane to 3/16, far plane to 3*16, field of view 65 degrees
-    const qreal zNear = 0.1, zFar = 60.0, fov = 65.0;
+    // Set near plane to 3/16, far plane to 3*16, field of view 55 degrees
+    const qreal zNear = 0.1, zFar = 60.0, fov = 55.0;
 
     // Reset projection
     projection.setToIdentity();
@@ -192,3 +191,4 @@ void MainWidget::paintGL()
     skyTexture->bind();
     geometries->drawSkyCubeGeometry(&program);
 }
+

@@ -44,6 +44,8 @@ protected:
     void initShaders();
     void initTextures();
 
+    
+
 private:
     QOpenGLShaderProgram program;
     GeometryEngine *geometries;

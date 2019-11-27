@@ -9,17 +9,6 @@
 #include <QVector2D>
 #include <QVector3D>
 
-#define LAND_DIVS   64          // Number of divisions in each cardinal direction for the land grid.  Can't exceed 256
-#define LAND_TEX_REPS   10      // Number of times the land texture repeats over the width and depth of the world
-
-#define FRAND(A)    (((float)rand()/(float)(RAND_MAX)) * (A))
-
-struct unlitVertexData
-{
-    QVector3D position;
-    QVector2D texCoord;
-};
-
 GeometryEngine::GeometryEngine() :
         skyVertBuf(QOpenGLBuffer::VertexBuffer),
         skyFacetsBuf(QOpenGLBuffer::IndexBuffer),
@@ -49,51 +38,59 @@ GeometryEngine::~GeometryEngine()
 
 void GeometryEngine::initLandGeometry()
 {
-    unlitVertexData vertices[LAND_DIVS*LAND_DIVS];
-
     for (int zi = 0; zi < LAND_DIVS; zi++)
     {
+        float zfrac = zi / float(LAND_DIVS - 1);
         for (int xi = 0; xi < LAND_DIVS; xi++)
         {
-            float xfrac = xi / float(LAND_DIVS-1);
-            float zfrac = zi / float(LAND_DIVS-1);
-            float x=-20.0f+(40.0f*xfrac);
-            float y=-2.0f + FRAND(0.25f);       // Random hills
-            float z=-20.0f+(40.0f*zfrac);
+            float xfrac = xi / float(LAND_DIVS - 1);
 
-            vertices[zi*LAND_DIVS + xi] = {
-                QVector3D(x, y, z),                                     // Vertex Coordinate
-                QVector2D(xfrac*LAND_TEX_REPS, zfrac*LAND_TEX_REPS)     // Texture Coordinate
+            landVerts[Coord_2on1(xi,zi)] = {
+                QVector3D(-20.0f + (40.0f * xfrac), -2.0f, -20.0f + (40.0f * zfrac)),    // Vertex Coordinate
+                QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS)                 // Texture Coordinate
             };
         }
     }
 
-    GLushort indices[2*LAND_DIVS*LAND_DIVS - 4];
-    GLushort * pi = indices;    // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
-    
+    // Seed the terrain generator with random heights at the 4 corners:
+    landVerts[Coord_2on1(0,           0          )].position.setY(Frand(-4.0f) - 2.0f);
+    landVerts[Coord_2on1(LAND_DIVS-1, 0          )].position.setY(Frand(-4.0f) - 2.0f);
+    landVerts[Coord_2on1(0,           LAND_DIVS-1)].position.setY(Frand(-4.0f) - 2.0f);
+    landVerts[Coord_2on1(LAND_DIVS-1, LAND_DIVS-1)].position.setY(Frand(-4.0f) - 2.0f);
+
+    // Randomize the terrain heights
+    diamondSquare(LAND_DIVS);
+
+    GLushort indices[2 * LAND_DIVS * LAND_DIVS - 4];
+    GLushort *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
+
     // Build the index list for a series of triangle strips
-    for (int zi = 0; zi < (LAND_DIVS-1); zi++)      // rows
+    for (int zi = 0; zi < (LAND_DIVS - 1); zi++) // rows
     {
-        for (int xi = 0; xi < LAND_DIVS; xi++)      // columns
+        for (int xi = 0; xi < LAND_DIVS; xi++) // columns
         {
-            *pi = xi+zi*LAND_DIVS; pi++;
-            if (zi && !xi) 
+            *pi = xi + zi * LAND_DIVS;
+            pi++;
+            if (zi && !xi)
             {
                 // Repeat the first index to signify new row, except for row 0
-                *pi = *(pi-1); pi++;
+                *pi = *(pi - 1);
+                pi++;
             }
 
-            *pi = xi+(zi+1)*LAND_DIVS; pi++;
+            *pi = xi + (zi + 1) * LAND_DIVS;
+            pi++;
         }
-        if (zi < (LAND_DIVS-2))
+        if (zi < (LAND_DIVS - 2))
         {
             // Double the last index in a row to signify end of row, except for last row
-            *pi = *(pi-1); pi++;
+            *pi = *(pi - 1);
+            pi++;
         }
     }
 
     landVertBuf.bind();
-    landVertBuf.allocate(vertices, sizeof(vertices));
+    landVertBuf.allocate(landVerts, sizeof(landVerts));
 
     landFacetsBuf.bind();
     skyFacetsBuf.allocate(indices, sizeof(indices));
@@ -204,3 +201,99 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
 
     glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
 }
+
+//
+// The following code implements the "Diamond Square" recursive terrain generation
+// algorithm.  "The idea was first introduced by Fournier, Fussell and Carpenter at SIGGRAPH 1982.": 
+// Fournier, Alain; Fussell, Don; Carpenter, Loren (June 1982). "Computer rendering of stochastic models". 
+//      Communications of the ACM. 25 (6): 371–384. doi:10.1145/358523.358553 
+// https://en.wikipedia.org/wiki/Diamond-square_algorithm
+//
+// This C++ implementation is based from the example code found at: 
+// https://medium.com/@nickobrien/diamond-square-algorithm-explanation-and-c-implementation-5efa891e486f
+//
+void GeometryEngine::diamondSquare(int size)
+{
+    int half = size / 2;
+    if (half < 1)
+        return;
+    
+    //square steps
+    for (int z = half; z < LAND_DIVS; z += size)
+        for (int x = half; x < LAND_DIVS; x += size)
+            squareStep(x % LAND_DIVS, z % LAND_DIVS, half);
+    
+    // diamond steps
+    int col = 0;
+    for (int x = 0; x < LAND_DIVS; x += half)
+    {
+        col++;
+        //If this is an odd column.
+        if (col % 2 == 1)
+            for (int z = half; z < LAND_DIVS; z += size)
+                diamondStep(x % LAND_DIVS, z % LAND_DIVS, half);
+        else
+            for (int z = 0; z < LAND_DIVS; z += size)
+                diamondStep(x % LAND_DIVS, z % LAND_DIVS, half);
+    }
+    diamondSquare(size / 2);
+}
+
+void GeometryEngine::squareStep(int x, int z, int reach)
+{
+    int count = 0;
+    float avg = 0.0f;
+    if (x - reach >= 0 && z - reach >= 0)
+    {
+        avg += landVerts[Coord_2on1(x - reach, z - reach)].position.y();
+        count++;
+    }
+    if (x - reach >= 0 && z + reach < LAND_DIVS)
+    {
+        avg += landVerts[Coord_2on1(x - reach, z + reach)].position.y();
+        count++;
+    }
+    if (x + reach < LAND_DIVS && z - reach >= 0)
+    {
+        avg += landVerts[Coord_2on1(x + reach, z - reach)].position.y();
+        count++;
+    }
+    if (x + reach < LAND_DIVS && z + reach < LAND_DIVS)
+    {
+        avg += landVerts[Coord_2on1(x + reach, z + reach)].position.y();
+        count++;
+    }
+    avg += Frand(reach/2.5f) - reach/5.0f;
+    avg /= float(count);
+    landVerts[Coord_2on1(x,z)].position.setY(avg);
+}
+
+void GeometryEngine::diamondStep(int x, int z, int reach)
+{
+    int count = 0;
+    float avg = 0.0f;
+    if (x - reach >= 0)
+    {
+        avg += landVerts[Coord_2on1(x - reach,z)].position.y();
+        count++;
+    }
+    if (x + reach < LAND_DIVS)
+    {
+        avg += landVerts[Coord_2on1(x + reach,z)].position.y();
+        count++;
+    }
+    if (z - reach >= 0)
+    {
+        avg += landVerts[Coord_2on1(x,z - reach)].position.y();
+        count++;
+    }
+    if (z + reach < LAND_DIVS)
+    {
+        avg += landVerts[Coord_2on1(x,z + reach)].position.y();
+        count++;
+    }
+    avg += Frand(reach/2.5f) - reach/5.0f;
+    avg /= float(count);
+    landVerts[Coord_2on1(x,z)].position.setY(avg);
+}
+
