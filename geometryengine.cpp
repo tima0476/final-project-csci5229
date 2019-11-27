@@ -55,14 +55,17 @@ void GeometryEngine::initLandGeometry()
         }
     }
 
-    // Seed the terrain generator with random heights at the 4 corners:
+    // Seed the terrain generator with random heights at the 4 corners.
     landVerts[Coord_2on1(0,           0          )].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
     landVerts[Coord_2on1(LAND_DIVS-1, 0          )].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
     landVerts[Coord_2on1(0,           LAND_DIVS-1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
     landVerts[Coord_2on1(LAND_DIVS-1, LAND_DIVS-1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
 
+    // Bias terrain to be bowl shaped by forcing a very low elevation of the initial center point
+    landVerts[Coord_2on1(LAND_DIVS/2, LAND_DIVS/2)].position.setY(-TERRAIN_RANGE - 2.0f);
+    
     // Randomize the terrain heights
-    diamondSquare(LAND_DIVS);
+    diamondSquare(LAND_DIVS, true);
 
     GLuint indices[2 * LAND_DIVS * LAND_DIVS - 4];
     GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
@@ -215,16 +218,17 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
 // This C++ implementation is based from the example code found at: 
 // https://medium.com/@nickobrien/diamond-square-algorithm-explanation-and-c-implementation-5efa891e486f
 //
-void GeometryEngine::diamondSquare(int size)
+void GeometryEngine::diamondSquare(int size, bool presetCenter)
 {
     int half = size / 2;
     if (half < 1)
         return;
     
-    //square steps
-    for (int z = half; z < LAND_DIVS; z += size)
-        for (int x = half; x < LAND_DIVS; x += size)
-            squareStep(x % LAND_DIVS, z % LAND_DIVS, half);
+    //square steps - skip if center point is pre-set
+    if (!presetCenter)
+        for (int z = half; z < LAND_DIVS; z += size)
+            for (int x = half; x < LAND_DIVS; x += size)
+                squareStep(x % LAND_DIVS, z % LAND_DIVS, half);
     
     // diamond steps
     int col = 0;

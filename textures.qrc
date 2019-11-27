@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>textures/2226.webp</file>
-        <file>textures/tileable-img_0062-verydark.png</file>
+        <file>textures/Mossy Rock.jpg</file>
+        <file>textures/GroundGrid.bmp</file>
     </qresource>
 </RCC>

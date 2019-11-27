@@ -151,11 +151,12 @@ void MainWidget::initTextures()
 {
     // Load sky texture.  Assumed to be of "cross" layout
     skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());
-    landTexture = new QOpenGLTexture(QImage(":/textures/tileable-img_0062-verydark.png").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":textures/Mossy Rock.jpg").mirrored());
+    // landTexture = new QOpenGLTexture(QImage(":textures/GroundGrid.bmp").mirrored());
 
     // Set nearest filtering mode for texture minification
-    skyTexture->setMinificationFilter(QOpenGLTexture::Nearest);
-    landTexture->setMinificationFilter(QOpenGLTexture::Nearest);
+    skyTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    landTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 
     // Set bilinear filtering mode for texture magnification
     skyTexture->setMagnificationFilter(QOpenGLTexture::Linear);

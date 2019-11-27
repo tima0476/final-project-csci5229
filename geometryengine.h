@@ -14,7 +14,7 @@
 
 #define LAND_DIVS       513     // Number of divisions in each cardinal direction for the land grid.  The "Diamond Square" 
                                 // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
-#define LAND_TEX_REPS   10      // The number of times the land texture repeats over the width and depth of the world
+#define LAND_TEX_REPS   20      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM       20.0f   // Half the width & depth & height of the world
 #define TERRAIN_RANGE   4.0f    // The maximum height range of the terrain
 #define TERRAIN_SMOOTH  20.0f   // Larger numbers give smoother terrain
@@ -43,7 +43,7 @@ private:
     void initSkyCubeGeometry();
     void initLandGeometry();
 
-    void diamondSquare(int size);
+    void diamondSquare(int size, bool presetCenter = false);
     void squareStep(int x, int z, int reach);
     void diamondStep(int x, int z, int reach);
 
