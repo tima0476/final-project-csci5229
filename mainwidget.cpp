@@ -16,9 +16,9 @@ MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     skyTexture(NULL),
-    viewerPos(0,0,0),
-    lookDir(0,0,-1),
-    th(0.0f), ph(0.0f)
+    viewerPos(-WORLD_DIM*0.5f, 0, WORLD_DIM*0.5f),
+    lookDir(0.707106781f,0,-0.707106781f),
+    th(-45.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -52,26 +52,36 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         case Qt::Key_W:
             // Move forward
             viewerPos += mvDir;
- 
-            // Maintain a fixed eye height above the ground
-            viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
-            update();
             break;
 
         case Qt::Key_S:
             // Move backwards
             viewerPos -= mvDir;
- 
-            // Maintain a fixed eye height above the ground
-            viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
- 
-            update();
             break;
-
+        
+        case Qt::Key_A:
+            // Move left
+            viewerPos.setX(viewerPos.x()+mvDir.z());
+            viewerPos.setZ(viewerPos.z()-mvDir.x());
+            break;
+ 
+        case Qt::Key_D:
+            // Move right;
+            viewerPos.setX(viewerPos.x()-mvDir.z());
+            viewerPos.setZ(viewerPos.z()+mvDir.x());
+            break;
+ 
         default:
             // VERY IMPORTANT!  Pass any key events we didn't handle to the base class handler
             QOpenGLWidget::keyPressEvent(e);
+            return;
     }
+    // We will only fall through to here if the keypress was handled in this routine.
+
+    // Maintain a fixed eye height above the ground
+    viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
+
+    update();
 }
 
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
@@ -116,7 +126,7 @@ void MainWidget::initializeGL()
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
@@ -149,22 +159,26 @@ void MainWidget::initShaders()
 
 void MainWidget::initTextures()
 {
-    // Load sky texture.  Assumed to be of "cross" layout
-    skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());
-    landTexture = new QOpenGLTexture(QImage(":textures/Mossy Rock.jpg").mirrored());
-    // landTexture = new QOpenGLTexture(QImage(":textures/GroundGrid.bmp").mirrored());
+    // Load textures
+    skyTexture = new QOpenGLTexture(QImage(":/textures/Sky/2226.webp").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":/textures/Land/Mossy-Rock.jpg").mirrored());
+    // landTexture = new QOpenGLTexture(QImage(":/textures/Land/GroundGrid.bmp").mirrored());
+    waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
 
     // Set nearest filtering mode for texture minification
     skyTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
     landTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    waterTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
 
     // Set bilinear filtering mode for texture magnification
     skyTexture->setMagnificationFilter(QOpenGLTexture::Linear);
     landTexture->setMagnificationFilter(QOpenGLTexture::Linear);
+    waterTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Wrap texture coordinates by repeating
     skyTexture->setWrapMode(QOpenGLTexture::Repeat);
     landTexture->setWrapMode(QOpenGLTexture::Repeat);
+    waterTexture->setWrapMode(QOpenGLTexture::Repeat);
 }
 
 
@@ -202,6 +216,11 @@ void MainWidget::paintGL()
     program.setUniformValue("texture", 0);
     landTexture->bind();
     geometries->drawLandGeometry(&program);
+
+    // Draw the water
+    program.setUniformValue("texture", 0);
+    waterTexture->bind();
+    geometries->drawWaterGeometry(&program);
 
     // Draw the skybox
     program.setUniformValue("texture", 0);

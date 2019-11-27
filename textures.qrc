@@ -1,7 +1,8 @@
 <RCC>
     <qresource prefix="/">
-        <file>textures/2226.webp</file>
-        <file>textures/Mossy Rock.jpg</file>
-        <file>textures/GroundGrid.bmp</file>
+        <file>textures/Sky/2226.webp</file>
+        <file>textures/Land/Mossy-Rock.jpg</file>
+        <file>textures/Land/GroundGrid.bmp</file>
+        <file>textures/Water/WaterPlain0012_1_270.jpg</file>
     </qresource>
 </RCC>

@@ -55,6 +55,7 @@ private:
 
     QOpenGLTexture *skyTexture;
     QOpenGLTexture *landTexture;
+    QOpenGLTexture *waterTexture;
 
     QMatrix4x4 projection;
 

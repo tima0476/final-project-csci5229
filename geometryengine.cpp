@@ -13,7 +13,10 @@ GeometryEngine::GeometryEngine() :
         skyVertBuf(QOpenGLBuffer::VertexBuffer),
         skyFacetsBuf(QOpenGLBuffer::IndexBuffer),
         landVertBuf(QOpenGLBuffer::VertexBuffer),
-        landFacetsBuf(QOpenGLBuffer::IndexBuffer)
+        landFacetsBuf(QOpenGLBuffer::IndexBuffer),
+        waterVertBuf(QOpenGLBuffer::VertexBuffer),
+        waterFacetsBuf(QOpenGLBuffer::IndexBuffer),
+        landLow(WORLD_DIM), landHigh(-WORLD_DIM), waterLevel(-WORLD_DIM)
 {
     initializeOpenGLFunctions();
 
@@ -22,10 +25,13 @@ GeometryEngine::GeometryEngine() :
     skyFacetsBuf.create();
     landVertBuf.create();
     landFacetsBuf.create();
+    waterVertBuf.create();
+    waterFacetsBuf.create();
 
     // Initialize the geometries and transfer them to the VBOs
     initSkyCubeGeometry();
     initLandGeometry();
+    initWaterGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
@@ -34,6 +40,8 @@ GeometryEngine::~GeometryEngine()
     skyFacetsBuf.destroy();
     landVertBuf.destroy();
     landFacetsBuf.destroy();
+    waterVertBuf.destroy();
+    waterFacetsBuf.destroy();
 }
 
 void GeometryEngine::initLandGeometry()
@@ -62,10 +70,24 @@ void GeometryEngine::initLandGeometry()
     landVerts[Coord_2on1(LAND_DIVS-1, LAND_DIVS-1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
 
     // Bias terrain to be bowl shaped by forcing a very low elevation of the initial center point
-    landVerts[Coord_2on1(LAND_DIVS/2, LAND_DIVS/2)].position.setY(-TERRAIN_RANGE - 2.0f);
+    landVerts[Coord_2on1(LAND_DIVS/2, LAND_DIVS/2)].position.setY(-TERRAIN_RANGE - 5.0f);
     
     // Randomize the terrain heights
     diamondSquare(LAND_DIVS, true);
+
+    // scan landmass statistics
+    for (int i=0; i<LAND_DIVS*LAND_DIVS; i++)
+    {
+        float y = landVerts[i].position.y();
+        if (i)
+            landAvg += y;
+        else
+            landAvg = y;
+
+        landLow = MIN(landLow, y);
+        landHigh = MAX(landHigh, y);
+    }
+    landAvg /= LAND_DIVS*LAND_DIVS;
 
     GLuint indices[2 * LAND_DIVS * LAND_DIVS - 4];
     GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
@@ -100,6 +122,30 @@ void GeometryEngine::initLandGeometry()
 
     landFacetsBuf.bind();
     landFacetsBuf.allocate(indices, sizeof(indices));
+}
+
+void GeometryEngine::initWaterGeometry()
+{
+    // Dynamically set the water level
+    waterLevel = landAvg + WATER_LEVEL;
+
+    unlitVertexData vertices[] = {
+        // Vertex data for water surface plane
+        {QVector3D(-WORLD_DIM, waterLevel, -WORLD_DIM), QVector2D(0.0f,           WATER_TEX_REPS)},
+        {QVector3D( WORLD_DIM, waterLevel, -WORLD_DIM), QVector2D(WATER_TEX_REPS, WATER_TEX_REPS)},
+        {QVector3D(-WORLD_DIM, waterLevel,  WORLD_DIM), QVector2D(0.0f,           0.0f)},
+        {QVector3D( WORLD_DIM, waterLevel,  WORLD_DIM), QVector2D(WATER_TEX_REPS, 0.0f)},
+    };
+    
+    GLushort indices[] = {
+        1, 1, 0, 3, 2, 2
+    };
+
+    waterVertBuf.bind();
+    waterVertBuf.allocate(vertices, sizeof(vertices));
+
+    waterFacetsBuf.bind();
+    waterFacetsBuf.allocate(indices, sizeof(indices));
 }
 
 void GeometryEngine::initSkyCubeGeometry()
@@ -181,6 +227,31 @@ void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(unlitVertexData));
 
     glDrawElements(GL_TRIANGLE_STRIP, skyFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+}
+
+void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
+{
+    // Tell OpenGL which VBOs to use
+    waterVertBuf.bind();
+    waterFacetsBuf.bind();
+
+    // Offset for position
+    quintptr offset = 0;
+
+    // Tell OpenGL programmable pipeline how to locate vertex position data
+    int vertexLocation = program->attributeLocation("a_position");
+    program->enableAttributeArray(vertexLocation);
+    program->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(unlitVertexData));
+
+    // Offset for texture coordinate
+    offset += sizeof(QVector3D);
+
+    // Tell OpenGL programmable pipeline how to locate vertex texture coordinate data
+    int texcoordLocation = program->attributeLocation("a_texcoord");
+    program->enableAttributeArray(texcoordLocation);
+    program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(unlitVertexData));
+
+    glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
 }
 
 void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
@@ -310,6 +381,5 @@ float GeometryEngine::getHeight(float wx, float wz)
     // Translate world coordinates to land vertex coordinates
     int x = int((wx + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
     int z = int((wz + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
-
-    return landVerts[Coord_2on1(x,z)].position.y();
+    return(MAX(landVerts[Coord_2on1(x,z)].position.y(), waterLevel));   // Don't go below water
 }

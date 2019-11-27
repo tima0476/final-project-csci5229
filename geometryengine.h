@@ -14,14 +14,18 @@
 
 #define LAND_DIVS       513     // Number of divisions in each cardinal direction for the land grid.  The "Diamond Square" 
                                 // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
-#define LAND_TEX_REPS   20      // The number of times the land texture repeats over the width and depth of the world
+#define LAND_TEX_REPS   25      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM       20.0f   // Half the width & depth & height of the world
-#define TERRAIN_RANGE   4.0f    // The maximum height range of the terrain
-#define TERRAIN_SMOOTH  20.0f   // Larger numbers give smoother terrain
+#define TERRAIN_RANGE   2.0f    // The maximum height range of the terrain
+#define TERRAIN_SMOOTH  15.0f   // Larger numbers give smoother terrain
+#define WATER_LEVEL     -1.5f    // elevation of water surface as offset from avg
+#define WATER_TEX_REPS  25.0f    // number of times to repeat the water texture
 
 // Convenience macros to improve readability
 #define Coord_2on1(X,Z) ((Z)*LAND_DIVS + (X))
 #define Frand(RANGE)    (float(rand()) * float(RANGE) / float(RAND_MAX))
+#define MIN(X,Y)        ((X)>(Y) ? (Y) : (X))
+#define MAX(X,Y)        ((X)>(Y) ? (X) : (Y))
 
 struct unlitVertexData
 {
@@ -37,11 +41,13 @@ public:
 
     void drawSkyCubeGeometry(QOpenGLShaderProgram *program);
     void drawLandGeometry(QOpenGLShaderProgram *program);
+    void drawWaterGeometry(QOpenGLShaderProgram *program);
     float getHeight(float x, float z);
 
 private:
     void initSkyCubeGeometry();
     void initLandGeometry();
+    void initWaterGeometry();
 
     void diamondSquare(int size, bool presetCenter = false);
     void squareStep(int x, int z, int reach);
@@ -54,6 +60,10 @@ private:
     QOpenGLBuffer skyFacetsBuf;
     QOpenGLBuffer landVertBuf;
     QOpenGLBuffer landFacetsBuf;
+    QOpenGLBuffer waterVertBuf;
+    QOpenGLBuffer waterFacetsBuf;
+
+    float landLow, landHigh, landAvg, waterLevel;
 };
 
 #endif // GEOMETRYENGINE_H
