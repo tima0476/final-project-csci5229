@@ -1,11 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>textures/2226.webp</file>
-        <file>textures/2374281533.jpeg</file>
-        <file>textures/DEBUG 2374281533.webp</file>
-        <file>textures/2721839643.jpg</file>
-        <file>textures/skyboxsun25degtest.png</file>
-        <file>textures/stormydays_large.jpg</file>
-        <file>textures/violentdays_large.jpg</file>
+        <file>textures/tileable-img_0062-verydark.png</file>
     </qresource>
 </RCC>

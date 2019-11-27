@@ -16,15 +16,15 @@ MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     skyTexture(NULL),
-    eyePosition(0,0,0),
+    viewerPos(0,-1.5,0),
     lookDir(0,0,-1),
-    th(180.0f)
+    th(0.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
 
     //  Set window title
-    setWindowTitle("meadow - Timothy Mason");
+    setWindowTitle("meadow - Timothy Mason's final project");
 }
 
 MainWidget::~MainWidget()
@@ -33,56 +33,59 @@ MainWidget::~MainWidget()
     // and the buffers.
     makeCurrent();
     delete skyTexture;
+    delete landTexture;
     delete geometries;
     doneCurrent();
 }
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
 {
+    QVector3D mvDir(lookDir/10.0);
+    mvDir.setY(0);          // For this sim, we are locked to the ground.  :-(
     switch (e->key()) {
         case Qt::Key_W:
             // Move forward
-            eyePosition += lookDir/10.0;
-
-            // OpenGL Redraw
+            viewerPos += mvDir;
             update();
             break;
 
         case Qt::Key_S:
             // Move forward
-            eyePosition -= lookDir/10.0;
-
-            // OpenGL Redraw
+            viewerPos -= mvDir;
             update();
             break;
 
         default:
+            // VERY IMPORTANT!  Pass any key events we didn't handle to the base class handler
             QOpenGLWidget::keyPressEvent(e);
     }
 }
 
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    // 1 mouse pixel of L/R movement = 1 degree of theta rotation
-    th += e->localPos().x() - mouseLastPosition.x();
-    th = fmod(th, 360.0f);
-        
-    // Update the direction we're looking for the new rotation
-    lookDir.setX(Sin(-th));
-    lookDir.setY(0.0f);
-    lookDir.setZ(Cos(-th));
+    // 1 mouse pixel of L/R movement = 1 degree of theta rotation (about y axis)
+    th -= e->localPos().x() - mouseLastPosition.x();
+    ph -= e->localPos().y() - mouseLastPosition.y();
 
+    th = fmod(th, 360.0f);  // bound th within -360 to 360 degrees
+    ph = fmod(ph, 360.0f);  // bound ph within -360 to 360 degrees
+        
+    // Update the direction we're looking for the new rotation.  I'm sure there's a way to do this
+    // with the Qt quaternion class, but this is straightforward to do it myself.
+    lookDir.setX(-Sin(th)*Cos(ph));
+    lookDir.setY(Sin(ph));
+    lookDir.setZ(-Cos(th)*Cos(ph));
 
     // Save the current mouse position so we can calculate a delta on the next mouse move
     mouseLastPosition = QVector2D(e->localPos());
 
-    // Request an OpenGL update
+    // Redraw the scene with the new view
     update();
 }
 
 void MainWidget::mousePressEvent(QMouseEvent *e)
 {
-    // Start of a mouse move - save initial mouse position
+    // Start of a mouse move - save the initial mouse position for delta calculation in mouseMoveEvent
     mouseLastPosition = QVector2D(e->localPos());
 }
 
@@ -96,14 +99,13 @@ void MainWidget::initializeGL()
     initShaders();
     initTextures();
 
-
     // Enable depth buffer
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
     glEnable(GL_CULL_FACE);
 
-
+    // Instantiate our geometry engine
     geometries = new GeometryEngine;
 }
 
@@ -131,24 +133,22 @@ void MainWidget::initShaders()
 
 void MainWidget::initTextures()
 {
-    // Load cube.png image
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());                    // Mountain swampy
-    skyTexture = new QOpenGLTexture(QImage(":/textures/2374281533.jpeg").mirrored());                 // Mountain Lake
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/DEBUG 2374281533.webp").mirrored());                 // Mountain Lake
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/2721839643.jpg").mirrored());           // Rocky Mountainous Desert
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/skyboxsun25degtest.png").mirrored());       // Flat, arid desert
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/stormydays_large.jpg").mirrored());             // Golden sunset
-    // skyTexture = new QOpenGLTexture(QImage(":/textures/violentdays_large.jpg").mirrored());        // Fiery sunset
+    // Load sky texture.  Assumed to be of "cross" layout
+    skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":/textures/tileable-img_0062-verydark.png").mirrored());
 
     // Set nearest filtering mode for texture minification
     skyTexture->setMinificationFilter(QOpenGLTexture::Nearest);
+    landTexture->setMinificationFilter(QOpenGLTexture::Nearest);
 
     // Set bilinear filtering mode for texture magnification
     skyTexture->setMagnificationFilter(QOpenGLTexture::Linear);
+    landTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
     // Wrap texture coordinates by repeating
     // f.ex. texture coordinate (1.1, 1.2) is same as (0.1, 0.2)
     skyTexture->setWrapMode(QOpenGLTexture::Repeat);
+    landTexture->setWrapMode(QOpenGLTexture::Repeat);
 }
 
 
@@ -158,8 +158,8 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    // Set near plane to 3/16, far plane to 3*16, field of view 45 degrees
-    const qreal zNear = 3.0/16.0, zFar = 3.0*16.0, fov = 45.0;
+    // Set near plane to 3/16, far plane to 3*16, field of view 65 degrees
+    const qreal zNear = 3.0/16.0, zFar = 3.0*16.0, fov = 65.0;
 
     // Reset projection
     projection.setToIdentity();
@@ -177,17 +177,18 @@ void MainWidget::paintGL()
     // Calculate model view transformation
     QMatrix4x4 matrix;
 
-    matrix.lookAt(eyePosition, eyePosition+lookDir, QVector3D(0,1,0));
+    matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));
 
     // Set modelview-projection matrix
     program.setUniformValue("mvp_matrix", projection * matrix);
 
-
-    // Use texture unit 0
+    // Draw the land
     program.setUniformValue("texture", 0);
+    landTexture->bind();
+    geometries->drawLandGeometry(&program);
 
+    // Draw the skybox
+    program.setUniformValue("texture", 0);
     skyTexture->bind();
-
-    // Draw cube geometry
     geometries->drawSkyCubeGeometry(&program);
 }

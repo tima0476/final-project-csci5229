@@ -19,12 +19,16 @@ public:
     virtual ~GeometryEngine();
 
     void drawSkyCubeGeometry(QOpenGLShaderProgram *program);
+    void drawLandGeometry(QOpenGLShaderProgram *program);
 
 private:
     void initSkyCubeGeometry();
+    void initLandGeometry();
 
     QOpenGLBuffer skyVertBuf;
     QOpenGLBuffer skyFacetsBuf;
+    QOpenGLBuffer landVertBuf;
+    QOpenGLBuffer landFacetsBuf;
 };
 
 #endif // GEOMETRYENGINE_H

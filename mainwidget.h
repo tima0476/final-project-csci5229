@@ -15,7 +15,6 @@
 #include <QMatrix4x4>
 #include <QQuaternion>
 #include <QVector2D>
-#include <QBasicTimer>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 
@@ -50,13 +49,14 @@ private:
     GeometryEngine *geometries;
 
     QOpenGLTexture *skyTexture;
+    QOpenGLTexture *landTexture;
 
     QMatrix4x4 projection;
 
     QVector2D mouseLastPosition;
-    QVector3D eyePosition;
+    QVector3D viewerPos;
     QVector3D lookDir;
-    float th;
+    float th, ph;
 };
 
 #endif // MAINWIDGET_H
