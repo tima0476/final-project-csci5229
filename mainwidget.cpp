@@ -159,7 +159,7 @@ void MainWidget::resizeGL(int w, int h)
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
     // Set near plane to 3/16, far plane to 3*16, field of view 65 degrees
-    const qreal zNear = 3.0/16.0, zFar = 3.0*16.0, fov = 65.0;
+    const qreal zNear = 0.1, zFar = 60.0, fov = 65.0;
 
     // Reset projection
     projection.setToIdentity();

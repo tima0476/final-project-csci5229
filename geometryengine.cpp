@@ -9,7 +9,7 @@
 #include <QVector2D>
 #include <QVector3D>
 
-#define LAND_DIVS   32          // Number of divisions in each cardinal direction for the land grid.  Can't exceed 256
+#define LAND_DIVS   64          // Number of divisions in each cardinal direction for the land grid.  Can't exceed 256
 #define LAND_TEX_REPS   10      // Number of times the land texture repeats over the width and depth of the world
 
 #define FRAND(A)    (((float)rand()/(float)(RAND_MAX)) * (A))
@@ -57,9 +57,9 @@ void GeometryEngine::initLandGeometry()
         {
             float xfrac = xi / float(LAND_DIVS-1);
             float zfrac = zi / float(LAND_DIVS-1);
-            float x=-10.5f+(21.0f*xfrac);
+            float x=-20.0f+(40.0f*xfrac);
             float y=-2.0f + FRAND(0.25f);       // Random hills
-            float z=-10.5f+(21.0f*zfrac);
+            float z=-20.0f+(40.0f*zfrac);
 
             vertices[zi*LAND_DIVS + xi] = {
                 QVector3D(x, y, z),                                     // Vertex Coordinate
@@ -102,41 +102,41 @@ void GeometryEngine::initLandGeometry()
 void GeometryEngine::initSkyCubeGeometry()
 {
     unlitVertexData vertices[] = {
-        // Vertex data for face 0  (Front; z = 10.5)
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(1.00f, 1.0f / 3.0f)}, // v0
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.75f, 1.0f / 3.0f)}, // v1
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(1.00f, 2.0f / 3.0f)}, // v2
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.75f, 2.0f / 3.0f)}, // v3
+        // Vertex data for face 0  (Front; z = 20.0)
+        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(1.00f, 1.0f / 3.0f)}, // v0
+        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.75f, 1.0f / 3.0f)}, // v1
+        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(1.00f, 2.0f / 3.0f)}, // v2
+        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.75f, 2.0f / 3.0f)}, // v3
 
-        // Vertex data for face 1  (Right; x = 10.5)  
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.75f, 1.0f / 3.0f)}, // v4
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 1.0f / 3.0f)}, // v5
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.75f, 2.0f / 3.0f)}, // v6
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 2.0f / 3.0f)}, // v7
+        // Vertex data for face 1  (Right; x = 20.0)  
+        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.75f, 1.0f / 3.0f)}, // v4
+        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v5
+        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.75f, 2.0f / 3.0f)}, // v6
+        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)}, // v7
 
-        // Vertex data for face 2  (Rear; z = -10.5)   
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 1.0f / 3.0f)}, // v8
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 1.0f / 3.0f)}, // v9
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 2.0f / 3.0f)}, // v10
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 2.0f / 3.0f)}, // v11
+        // Vertex data for face 2  (Rear; z = -20.0)   
+        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v8
+        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v9
+        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)}, // v10
+        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v11
 
-        // Vertex data for face 3  (Left; x = -10.5)   
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 1.0f / 3.0f)}, // v12
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.00f, 1.0f / 3.0f)}, // v13
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 2.0f / 3.0f)}, // v14
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.00f, 2.0f / 3.0f)}, // v15
+        // Vertex data for face 3  (Left; x = -20.0)   
+        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v12
+        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(0.00f, 1.0f / 3.0f)}, // v13
+        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v14
+        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(0.00f, 2.0f / 3.0f)}, // v15
 
-        // Vertex data for face 4  (Bottom; y = -10.5) 
-        {QVector3D(-10.5f, -10.5f, -10.5f), QVector2D(0.25f, 1.0f / 3.0f)}, // v16
-        {QVector3D( 10.5f, -10.5f, -10.5f), QVector2D(0.50f, 1.0f / 3.0f)}, // v17
-        {QVector3D(-10.5f, -10.5f,  10.5f), QVector2D(0.25f, 0.0f)},        // v18
-        {QVector3D( 10.5f, -10.5f,  10.5f), QVector2D(0.50f, 0.0f)},        // v19
+        // Vertex data for face 4  (Bottom; y = -20.0) 
+        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v16
+        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v17
+        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(0.25f, 0.0f)},        // v18
+        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.50f, 0.0f)},        // v19
 
-        // Vertex data for face 5  (Top; y = 10.5)    
-        {QVector3D(-10.5f,  10.5f,  10.5f), QVector2D(0.25f, 1.0f)},        // v20
-        {QVector3D( 10.5f,  10.5f,  10.5f), QVector2D(0.50f, 1.0f)},        // v21
-        {QVector3D(-10.5f,  10.5f, -10.5f), QVector2D(0.25f, 2.0f / 3.0f)}, // v22
-        {QVector3D( 10.5f,  10.5f, -10.5f), QVector2D(0.50f, 2.0f / 3.0f)} // v23
+        // Vertex data for face 5  (Top; y = 20.0)    
+        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(0.25f, 1.0f)},        // v20
+        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.50f, 1.0f)},        // v21
+        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v22
+        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)} // v23
     };
     
     GLushort indices[] = {
