@@ -46,23 +46,26 @@ void GeometryEngine::initLandGeometry()
             float xfrac = xi / float(LAND_DIVS - 1);
 
             landVerts[Coord_2on1(xi,zi)] = {
-                QVector3D(-20.0f + (40.0f * xfrac), -2.0f, -20.0f + (40.0f * zfrac)),    // Vertex Coordinate
-                QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS)                 // Texture Coordinate
+                QVector3D(
+                    -WORLD_DIM + (WORLD_DIM * 2.0f * xfrac),            // Vertex x
+                    -2.0f,                                              // Vertex y
+                    -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),           // Vertex z
+                QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS) // Texture Coordinate
             };
         }
     }
 
     // Seed the terrain generator with random heights at the 4 corners:
-    landVerts[Coord_2on1(0,           0          )].position.setY(Frand(-4.0f) - 2.0f);
-    landVerts[Coord_2on1(LAND_DIVS-1, 0          )].position.setY(Frand(-4.0f) - 2.0f);
-    landVerts[Coord_2on1(0,           LAND_DIVS-1)].position.setY(Frand(-4.0f) - 2.0f);
-    landVerts[Coord_2on1(LAND_DIVS-1, LAND_DIVS-1)].position.setY(Frand(-4.0f) - 2.0f);
+    landVerts[Coord_2on1(0,           0          )].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
+    landVerts[Coord_2on1(LAND_DIVS-1, 0          )].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
+    landVerts[Coord_2on1(0,           LAND_DIVS-1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
+    landVerts[Coord_2on1(LAND_DIVS-1, LAND_DIVS-1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
 
     // Randomize the terrain heights
     diamondSquare(LAND_DIVS);
 
-    GLushort indices[2 * LAND_DIVS * LAND_DIVS - 4];
-    GLushort *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
+    GLuint indices[2 * LAND_DIVS * LAND_DIVS - 4];
+    GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
 
     // Build the index list for a series of triangle strips
     for (int zi = 0; zi < (LAND_DIVS - 1); zi++) // rows
@@ -93,47 +96,47 @@ void GeometryEngine::initLandGeometry()
     landVertBuf.allocate(landVerts, sizeof(landVerts));
 
     landFacetsBuf.bind();
-    skyFacetsBuf.allocate(indices, sizeof(indices));
+    landFacetsBuf.allocate(indices, sizeof(indices));
 }
 
 void GeometryEngine::initSkyCubeGeometry()
 {
     unlitVertexData vertices[] = {
-        // Vertex data for face 0  (Front; z = 20.0)
-        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(1.00f, 1.0f / 3.0f)}, // v0
-        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.75f, 1.0f / 3.0f)}, // v1
-        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(1.00f, 2.0f / 3.0f)}, // v2
-        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.75f, 2.0f / 3.0f)}, // v3
+        // Vertex data for face 0  (Front)
+        {QVector3D(-WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(1.00f, 1.0f / 3.0f)}, // v0
+        {QVector3D( WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.75f, 1.0f / 3.0f)}, // v1
+        {QVector3D(-WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(1.00f, 2.0f / 3.0f)}, // v2
+        {QVector3D( WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.75f, 2.0f / 3.0f)}, // v3
 
-        // Vertex data for face 1  (Right; x = 20.0)  
-        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.75f, 1.0f / 3.0f)}, // v4
-        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v5
-        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.75f, 2.0f / 3.0f)}, // v6
-        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)}, // v7
+        // Vertex data for face 1  (Right)  
+        {QVector3D( WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.75f, 1.0f / 3.0f)}, // v4
+        {QVector3D( WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 1.0f / 3.0f)}, // v5
+        {QVector3D( WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.75f, 2.0f / 3.0f)}, // v6
+        {QVector3D( WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 2.0f / 3.0f)}, // v7
 
-        // Vertex data for face 2  (Rear; z = -20.0)   
-        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v8
-        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v9
-        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)}, // v10
-        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v11
+        // Vertex data for face 2  (Rear)   
+        {QVector3D( WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 1.0f / 3.0f)}, // v8
+        {QVector3D(-WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 1.0f / 3.0f)}, // v9
+        {QVector3D( WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 2.0f / 3.0f)}, // v10
+        {QVector3D(-WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 2.0f / 3.0f)}, // v11
 
-        // Vertex data for face 3  (Left; x = -20.0)   
-        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v12
-        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(0.00f, 1.0f / 3.0f)}, // v13
-        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v14
-        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(0.00f, 2.0f / 3.0f)}, // v15
+        // Vertex data for face 3  (Left)   
+        {QVector3D(-WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 1.0f / 3.0f)}, // v12
+        {QVector3D(-WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.00f, 1.0f / 3.0f)}, // v13
+        {QVector3D(-WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 2.0f / 3.0f)}, // v14
+        {QVector3D(-WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.00f, 2.0f / 3.0f)}, // v15
 
-        // Vertex data for face 4  (Bottom; y = -20.0) 
-        {QVector3D(-20.0f, -20.0f, -20.0f), QVector2D(0.25f, 1.0f / 3.0f)}, // v16
-        {QVector3D( 20.0f, -20.0f, -20.0f), QVector2D(0.50f, 1.0f / 3.0f)}, // v17
-        {QVector3D(-20.0f, -20.0f,  20.0f), QVector2D(0.25f, 0.0f)},        // v18
-        {QVector3D( 20.0f, -20.0f,  20.0f), QVector2D(0.50f, 0.0f)},        // v19
+        // Vertex data for face 4  (Bottom) 
+        {QVector3D(-WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 1.0f / 3.0f)}, // v16
+        {QVector3D( WORLD_DIM, -WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 1.0f / 3.0f)}, // v17
+        {QVector3D(-WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.25f, 0.0f)},        // v18
+        {QVector3D( WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.50f, 0.0f)},        // v19
 
-        // Vertex data for face 5  (Top; y = 20.0)    
-        {QVector3D(-20.0f,  20.0f,  20.0f), QVector2D(0.25f, 1.0f)},        // v20
-        {QVector3D( 20.0f,  20.0f,  20.0f), QVector2D(0.50f, 1.0f)},        // v21
-        {QVector3D(-20.0f,  20.0f, -20.0f), QVector2D(0.25f, 2.0f / 3.0f)}, // v22
-        {QVector3D( 20.0f,  20.0f, -20.0f), QVector2D(0.50f, 2.0f / 3.0f)} // v23
+        // Vertex data for face 5  (Top)    
+        {QVector3D(-WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.25f, 1.0f)},        // v20
+        {QVector3D( WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.50f, 1.0f)},        // v21
+        {QVector3D(-WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 2.0f / 3.0f)}, // v22
+        {QVector3D( WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 2.0f / 3.0f)}  // v23
     };
     
     GLushort indices[] = {
@@ -199,7 +202,7 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(texcoordLocation);
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(unlitVertexData));
 
-    glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size()/sizeof(GLuint), GL_UNSIGNED_INT, 0);
 }
 
 //
@@ -263,7 +266,7 @@ void GeometryEngine::squareStep(int x, int z, int reach)
         avg += landVerts[Coord_2on1(x + reach, z + reach)].position.y();
         count++;
     }
-    avg += Frand(reach/2.5f) - reach/5.0f;
+    avg += Frand(reach/TERRAIN_SMOOTH) - reach/(TERRAIN_SMOOTH*2.0f);
     avg /= float(count);
     landVerts[Coord_2on1(x,z)].position.setY(avg);
 }
@@ -292,8 +295,17 @@ void GeometryEngine::diamondStep(int x, int z, int reach)
         avg += landVerts[Coord_2on1(x,z + reach)].position.y();
         count++;
     }
-    avg += Frand(reach/2.5f) - reach/5.0f;
+    avg += Frand(reach/TERRAIN_SMOOTH) - reach/(TERRAIN_SMOOTH*2.0f);
     avg /= float(count);
     landVerts[Coord_2on1(x,z)].position.setY(avg);
 }
 
+// return the y height of the land grid at (x,z)
+float GeometryEngine::getHeight(float wx, float wz)
+{
+    // Translate world coordinates to land vertex coordinates
+    int x = int((wx + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
+    int z = int((wz + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
+
+    return landVerts[Coord_2on1(x,z)].position.y();
+}

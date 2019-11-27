@@ -40,18 +40,31 @@ MainWidget::~MainWidget()
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
 {
-    QVector3D mvDir(lookDir/10.0);
-    mvDir.setY(0);          // For this sim, we are locked to the ground.  :-(
+    QVector3D mvDir(lookDir);
+    
+    mvDir.setY(0);              // For this sim, we are locked to the ground.  :-(
+    // To do:  Instead of squashing Y, point the move vector towards the appropriate (interpolated) point at eye height above
+    // the nearest terrain edge in the direction we're looking
+    mvDir.normalize();          // Move a fixed amount, even if user is starting at the sky or the ground
+    mvDir *= MOVE_AMT;
+
     switch (e->key()) {
         case Qt::Key_W:
             // Move forward
             viewerPos += mvDir;
+ 
+            // Maintain a fixed eye height above the ground
+            viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
             update();
             break;
 
         case Qt::Key_S:
-            // Move forward
+            // Move backwards
             viewerPos -= mvDir;
+ 
+            // Maintain a fixed eye height above the ground
+            viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
+ 
             update();
             break;
 
@@ -107,6 +120,9 @@ void MainWidget::initializeGL()
 
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
+
+    // land terrain was generated in the geometry constructor.  Set our eye initial height based on the terrain
+    viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
 }
 
 
@@ -135,7 +151,7 @@ void MainWidget::initTextures()
 {
     // Load sky texture.  Assumed to be of "cross" layout
     skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());
-    landTexture = new QOpenGLTexture(QImage(":/textures/HITW-TS2-forest-evergreen-bareground-2.jpg").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":/textures/tileable-img_0062-verydark.png").mirrored());
 
     // Set nearest filtering mode for texture minification
     skyTexture->setMinificationFilter(QOpenGLTexture::Nearest);

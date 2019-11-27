@@ -12,11 +12,12 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
 
-#define LAND_DIVS       129     // Number of divisions in each cardinal direction for the land grid.  Can't exceed 256
-                                // due to LAND_DIVS^2 must fit into a 16-bit unsigned integer.  And, the "Diamond Square" 
-                                // terrain generation algorithm requires it to be a power of 2 plus 1.
-                                // Therefore, valid values are:  3, 5, 9, 17, 33, 65, 129
+#define LAND_DIVS       513     // Number of divisions in each cardinal direction for the land grid.  The "Diamond Square" 
+                                // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
 #define LAND_TEX_REPS   10      // The number of times the land texture repeats over the width and depth of the world
+#define WORLD_DIM       20.0f   // Half the width & depth & height of the world
+#define TERRAIN_RANGE   4.0f    // The maximum height range of the terrain
+#define TERRAIN_SMOOTH  20.0f   // Larger numbers give smoother terrain
 
 // Convenience macros to improve readability
 #define Coord_2on1(X,Z) ((Z)*LAND_DIVS + (X))
@@ -36,6 +37,7 @@ public:
 
     void drawSkyCubeGeometry(QOpenGLShaderProgram *program);
     void drawLandGeometry(QOpenGLShaderProgram *program);
+    float getHeight(float x, float z);
 
 private:
     void initSkyCubeGeometry();
