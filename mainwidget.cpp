@@ -135,7 +135,7 @@ void MainWidget::initTextures()
 {
     // Load sky texture.  Assumed to be of "cross" layout
     skyTexture = new QOpenGLTexture(QImage(":/textures/2226.webp").mirrored());
-    landTexture = new QOpenGLTexture(QImage(":/textures/tileable-img_0062-verydark.png").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":/textures/HITW-TS2-forest-evergreen-bareground-2.jpg").mirrored());
 
     // Set nearest filtering mode for texture minification
     skyTexture->setMinificationFilter(QOpenGLTexture::Nearest);
