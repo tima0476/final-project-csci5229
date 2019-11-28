@@ -70,13 +70,9 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
             viewerPos.setX(viewerPos.x()-mvDir.z());
             viewerPos.setZ(viewerPos.z()+mvDir.x());
             break;
- 
-        default:
-            // VERY IMPORTANT!  Pass any key events we didn't handle to the base class handler
-            QOpenGLWidget::keyPressEvent(e);
-            return;
     }
-    // We will only fall through to here if the keypress was handled in this routine.
+    // Allow the base class to also handle all keypress events
+    QOpenGLWidget::keyPressEvent(e);
 
     // Maintain a fixed eye height above the ground
     viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
@@ -160,7 +156,7 @@ void MainWidget::initShaders()
 void MainWidget::initTextures()
 {
     // Load textures
-    skyTexture = new QOpenGLTexture(QImage(":/textures/Sky/2226.webp").mirrored());
+    skyTexture = new QOpenGLTexture(QImage(":/textures/Sky/2226.png").mirrored());
     landTexture = new QOpenGLTexture(QImage(":/textures/Land/Mossy-Rock.jpg").mirrored());
     // landTexture = new QOpenGLTexture(QImage(":/textures/Land/GroundGrid.bmp").mirrored());
     waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
