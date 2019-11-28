@@ -83,8 +83,8 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
     // 1 mouse pixel of L/R movement = 1 degree of theta rotation (about y axis)
-    th -= e->localPos().x() - mouseLastPosition.x();
-    ph -= e->localPos().y() - mouseLastPosition.y();
+    th -= (e->localPos().x() - mouseLastPosition.x()) / 3.0f;
+    ph -= (e->localPos().y() - mouseLastPosition.y()) / 3.0f;
 
     th = fmod(th, 360.0f);  // bound th within -360 to 360 degrees
     ph = fmod(ph, 360.0f);  // bound ph within -360 to 360 degrees
