@@ -157,7 +157,7 @@ void MainWidget::initTextures()
 {
     // Load textures
     skyTexture = new QOpenGLTexture(QImage(":/textures/Sky/2226.png").mirrored());
-    landTexture = new QOpenGLTexture(QImage(":/textures/Land/Mossy-Rock.jpg").mirrored());
+    landTexture = new QOpenGLTexture(QImage(":/textures/Land/85290912-seamless-tileable-natural-ground-field-texture.jpg").mirrored());
     // landTexture = new QOpenGLTexture(QImage(":/textures/Land/GroundGrid.bmp").mirrored());
     waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
 

@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>textures/Sky/2226.png</file>
-        <file>textures/Land/Mossy-Rock.jpg</file>
+        <file>textures/Land/85290912-seamless-tileable-natural-ground-field-texture.jpg</file>
         <file>textures/Water/WaterPlain0012_1_270.jpg</file>
     </qresource>
 </RCC>
