@@ -3,6 +3,8 @@
 ** Adapted from "cube" example code from the Qt library
 **   https://doc.qt.io/qt-5/qtopengl-cube-example.html
 **
+** vertex shader with texture coordinates and lighting
+**
 ****************************************************************************/
 
 uniform mat4 mvp_matrix;

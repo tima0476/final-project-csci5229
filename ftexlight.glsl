@@ -3,6 +3,8 @@
 ** Adapted from "cube" example code from the Qt library
 **   https://doc.qt.io/qt-5/qtopengl-cube-example.html
 **
+** Fragment shader with texture mapping and lighting
+**
 ****************************************************************************/
 
 uniform sampler2D texture;

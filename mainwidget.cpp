@@ -15,7 +15,7 @@
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
-    skyTexture(NULL),
+    skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
     viewerPos(-WORLD_DIM*0.5f, 0, WORLD_DIM*0.5f),
     lookDir(0.707106781f,0,-0.707106781f),
     th(-45.0f), ph(0.0f)
@@ -134,20 +134,22 @@ void MainWidget::initializeGL()
 
 void MainWidget::initShaders()
 {
-    // Compile vertex shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vshader.glsl"))
+    // Compile vertex shaders
+    if (!skyProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vtexonly.glsl"))
+        close();
+    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vtexlight.glsl"))
         close();
 
-    // Compile fragment shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fshader.glsl"))
+    // Compile fragment shaders
+    if (!skyProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexonly.glsl"))
+        close();
+    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexlight.glsl"))
         close();
 
-    // Link shader pipeline
-    if (!program.link())
+    // Link shader pipelines
+    if (!skyProgram.link())
         close();
-
-    // Bind shader pipeline for use
-    if (!program.bind())
+    if (!mainProgram.link())
         close();
 }
 
@@ -158,7 +160,6 @@ void MainWidget::initTextures()
     // Load textures
     skyTexture = new QOpenGLTexture(QImage(":/textures/Sky/2226.png").mirrored());
     landTexture = new QOpenGLTexture(QImage(":/textures/Land/85290912-seamless-tileable-natural-ground-field-texture.jpg").mirrored());
-    // landTexture = new QOpenGLTexture(QImage(":/textures/Land/GroundGrid.bmp").mirrored());
     waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
 
     // Set nearest filtering mode for texture minification
@@ -205,22 +206,33 @@ void MainWidget::paintGL()
 
     matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));
 
+    // Bind skybox shader pipeline for use
+    if (!skyProgram.bind())
+        close();
+
     // Set modelview-projection matrix
-    program.setUniformValue("mvp_matrix", projection * matrix);
-
-    // Draw the land
-    program.setUniformValue("texture", 0);
-    landTexture->bind();
-    geometries->drawLandGeometry(&program);
-
-    // Draw the water
-    program.setUniformValue("texture", 0);
-    waterTexture->bind();
-    geometries->drawWaterGeometry(&program);
+    skyProgram.setUniformValue("mvp_matrix", projection * matrix);
 
     // Draw the skybox
-    program.setUniformValue("texture", 0);
+    skyProgram.setUniformValue("texture", 0);
     skyTexture->bind();
-    geometries->drawSkyCubeGeometry(&program);
+    geometries->drawSkyCubeGeometry(&skyProgram);
+
+
+    // Bind main shader pipeline for use
+    if (!mainProgram.bind())
+        close();
+
+    // Set modelview-projection matrix
+    mainProgram.setUniformValue("mvp_matrix", projection * matrix);
+
+    // Draw the land
+    mainProgram.setUniformValue("texture", 0);
+    landTexture->bind();
+    geometries->drawLandGeometry(&mainProgram);
+
+    // Draw the water
+    waterTexture->bind();
+    geometries->drawWaterGeometry(&mainProgram);
 }
 

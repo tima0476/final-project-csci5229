@@ -54,10 +54,12 @@ void GeometryEngine::initLandGeometry()
             float xfrac = xi / float(LAND_DIVS - 1);
 
             landVerts[Coord_2on1(xi,zi)] = {
+                // Vertex
                 QVector3D(
                     -WORLD_DIM + (WORLD_DIM * 2.0f * xfrac),            // Vertex x
-                    -2.0f,                                              // Vertex y
+                    -2.0f,                                              // Vertex y (default flat terrain will be refined below)
                     -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),           // Vertex z
+                //Texture Coordinate
                 QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS) // Texture Coordinate
             };
         }
