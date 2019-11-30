@@ -8,6 +8,8 @@
 #ifndef GEOMETRYENGINE_H
 #define GEOMETRYENGINE_H
 
+#define DEBUG
+
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -50,7 +52,8 @@ public:
     void drawLandGeometry(QOpenGLShaderProgram *program);
     void drawWaterGeometry(QOpenGLShaderProgram *program);
     float getHeight(float x, float z, bool stayAbove = true);
-    bool adjustViewerPos(QVector3D & viewerPos);
+    bool adjustViewerPos(QVector3D & viewerPos, QVector2D searchDir);
+    float getWaterLevel(void) { return waterLevel; }
 
 
 private:

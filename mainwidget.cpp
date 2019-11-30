@@ -11,14 +11,18 @@
 #include <QMouseEvent>
 
 #include <math.h>
+#ifdef DEBUG
+#include <iostream>
+using namespace std;
+#endif // DEBUG
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-    viewerPos(-WORLD_DIM, 0, WORLD_DIM),
+    viewerPos(-WORLD_DIM/2, 0, WORLD_DIM/2),
     lookDir(0.7f, 0.0f, 0.7f),
-    th(225.0f), ph(0.0f)
+    th(247.5f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -70,7 +74,16 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
             viewerPos.setX(viewerPos.x()-mvDir.z());
             viewerPos.setZ(viewerPos.z()+mvDir.x());
             break;
+
+        case Qt::Key_Escape:
+        case Qt::Key_Q:
+            // exit application
+            close();            
     }
+
+#ifdef DEBUG
+    cout << "(" << viewerPos.x() << "," << viewerPos.y() << "," << viewerPos.z() << ")" << endl;
+#endif //DEBUG
     // Allow the base class to also handle all keypress events
     QOpenGLWidget::keyPressEvent(e);
 
@@ -113,7 +126,7 @@ void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0,0,0,1);
+    glClearColor(0,1,1,1);  // Cyan to match the sky
 
     initShaders();
     initTextures();
@@ -128,7 +141,51 @@ void MainWidget::initializeGL()
     geometries = new GeometryEngine;
 
     // Adjust starting position to be near the lake.
-    geometries->adjustViewerPos(viewerPos);
+    int retries = 11;
+    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM/2.0f,-WORLD_DIM).normalized()) && retries--)
+    {
+        // No lake found.  Delete this world and make another one
+#ifdef DEBUG
+        cout << "MULLIGAN!" << endl;
+#endif //DEBUG
+        delete geometries;
+        geometries = new GeometryEngine;
+    }
+
+    // Now find a lookDir that looks along the edge of the lake.  
+    
+    // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
+    // Keep turning until the point 3 water proximity clicks away transitions above or below water.
+    QVector3D testVec(-Sin(th)*WATER_START_PROX*3.0f, 0, -Cos(th)*WATER_START_PROX*3.0);
+    QVector3D testLoc(viewerPos+testVec);
+    bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
+#ifdef DEBUG
+    cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
+#endif //DEBUG
+    float inc(startAbove ? 1.0f : -1.0f);
+    bool curr(startAbove);
+    while (startAbove == (curr=geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
+    {
+        th += inc;
+#ifdef DEBUG
+        cout << "th=" << th << "; ";
+#endif // DEBUG
+        testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
+        testLoc = viewerPos+testVec;
+#ifdef DEBUG
+        cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
+#endif // DEBUG        
+    }
+    if (th <= -720.0f || th >= 720.f)
+        // The simplistic shoreline search failed.  Revert to a default lookdir
+        th = 247.0f;
+
+#ifdef DEBUG
+    cout << "Final lookDir = " << th << endl;
+#endif // DEBUG
+    lookDir.setX(-Sin(th)*Cos(ph));
+    lookDir.setY(Sin(ph));
+    lookDir.setZ(-Cos(th)*Cos(ph));
 
     // Set our eye initial height based on the terrain
     viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
@@ -199,7 +256,7 @@ void MainWidget::paintGL()
 
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));
+    matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));  // +Y is always up
 
     // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
     QVector3D lightPos( WORLD_DIM, WORLD_DIM/2.0f, -WORLD_DIM/2.0f);

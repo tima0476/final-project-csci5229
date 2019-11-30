@@ -9,6 +9,11 @@
 #include <QVector2D>
 #include <QVector3D>
 
+#ifdef DEBUG
+#include <iostream>
+using namespace std;
+#endif //DEBUG
+
 GeometryEngine::GeometryEngine() :
         skyVertBuf(QOpenGLBuffer::VertexBuffer),
         skyFacetsBuf(QOpenGLBuffer::IndexBuffer),
@@ -61,7 +66,7 @@ void GeometryEngine::initLandGeometry()
                     -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),           // Vertex z
 
                 // Normal vertex
-                QVector3D(),                                            // refine later after random terrain generated
+                QVector3D(),                                            // compute later after random terrain generated
                 
                 // Texture Coordinate
                 QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS) // Texture Coordinate
@@ -81,7 +86,7 @@ void GeometryEngine::initLandGeometry()
     // Randomize the terrain heights
     diamondSquare(LAND_DIVS, true);
 
-    // Calculate average normals, and also calculate the average elevation for use in determining the water level
+    // Calculate normals, and also calculate the average elevation for use in determining the water level
     landAvg = 0.0;
     for (int zi = 0; zi < LAND_DIVS; zi++)
     {
@@ -89,14 +94,14 @@ void GeometryEngine::initLandGeometry()
         {
             QVector3D p = landVerts[Coord_2on1(xi,zi)].position;
 
-            // Calculate the direction vector to the adjacent grid points.  Handle "edge of the grid" cases with zero vectors
-            // because they will then "drop out" when used in a cross-product.  (default QVector3d with null constructor is zero)
+            // Calculate the direction vectors to the (2..4) adjacent grid points.  Handle "edge of the grid" cases with zero vectors
+            // because they will then drop out when used in a cross-product.  (default QVector3d with null constructor is a zero vector)
             QVector3D va;   if (zi)             va = landVerts[Coord_2on1(xi  ,zi-1)].position - p;
             QVector3D vb;   if (xi<LAND_DIVS-1) vb = landVerts[Coord_2on1(xi+1,zi  )].position - p;
             QVector3D vc;   if (zi<LAND_DIVS-1) vc = landVerts[Coord_2on1(xi  ,zi+1)].position - p;
             QVector3D vd;   if (xi)             vd = landVerts[Coord_2on1(xi-1,zi  )].position - p;
 
-            // Magnitude of the normal vector doesn't matter, so just do a simple sum to get a vector pointing in the average direction.
+            // Magnitude of the normal vector doesn't matter, so just do a sum to get a vector pointing in the average direction.
             // Edge cases will drop out due to having one vector (edge) or both vectors (corner) being zero.
             landVerts[Coord_2on1(xi,zi)].normal = QVector3D::crossProduct(vb,va) + QVector3D::crossProduct(vc,vb) +
                     QVector3D::crossProduct(vd,vc) + QVector3D::crossProduct(vd,va);
@@ -106,10 +111,10 @@ void GeometryEngine::initLandGeometry()
     landAvg /= LAND_DIVS*LAND_DIVS;
 
     //
-    // Now create the facets (index) array
+    // Now create the facets (index) array for the land grid
     //
     GLuint indices[2 * LAND_DIVS * LAND_DIVS - 4];
-    GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
+    GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices at strip boundaries
 
     // Build the index list (facets) for a series of triangle strips
     for (int zi = 0; zi < (LAND_DIVS - 1); zi++) // rows
@@ -200,11 +205,11 @@ void GeometryEngine::initSkyCubeGeometry()
         {QVector3D(-WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.25f, 0.0f)},        // v18
         {QVector3D( WORLD_DIM, -WORLD_DIM,  WORLD_DIM), QVector2D(0.50f, 0.0f)},        // v19
 
-        // Vertex data for face 5  (Top)    
-        {QVector3D(-WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.25f, 1.0f)},        // v20
-        {QVector3D( WORLD_DIM,  WORLD_DIM,  WORLD_DIM), QVector2D(0.50f, 1.0f)},        // v21
-        {QVector3D(-WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.25f, 2.0f / 3.0f)}, // v22
-        {QVector3D( WORLD_DIM,  WORLD_DIM, -WORLD_DIM), QVector2D(0.50f, 2.0f / 3.0f)}  // v23
+        // Vertex data for face 5  (Top)    (fudge a tiny bit lower and stretch texture a tiny bit to smooth annoying black seam in the sky)
+        {QVector3D(-WORLD_DIM,  WORLD_DIM-0.1,  WORLD_DIM), QVector2D(0.26f, 0.99f)},       // v20
+        {QVector3D( WORLD_DIM,  WORLD_DIM-0.1,  WORLD_DIM), QVector2D(0.49f, 0.99f)},       // v21
+        {QVector3D(-WORLD_DIM,  WORLD_DIM-0.1, -WORLD_DIM), QVector2D(0.26f, 2.0f / 3.0f)}, // v22
+        {QVector3D( WORLD_DIM,  WORLD_DIM-0.1, -WORLD_DIM), QVector2D(0.49f, 2.0f / 3.0f)}  // v23
     };
     
     GLushort indices[] = {
@@ -426,20 +431,30 @@ float GeometryEngine::getHeight(float wx, float wz, bool stayAbove)
         return(landVerts[Coord_2on1(x,z)].position.y());
 }
 
-bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos)
+bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos, QVector2D searchDir)
 {
     // Find the edge of the water.
     float y = getHeight(viewerPos.x(), viewerPos.z(), false);
-    QVector2D dir(0.7f,-0.7f);
     if (y < waterLevel)
     {
-        dir *= -1.0f;
+#ifdef DEBUG
+        cout << "Underwater search" << endl;
+#endif //DEBUG
         while( y < waterLevel )
         {
-            viewerPos.setX( viewerPos.x() + dir.x());
-            viewerPos.setZ( viewerPos.z() + dir.y());
+            viewerPos.setX( viewerPos.x() - searchDir.x());
+            viewerPos.setZ( viewerPos.z() - searchDir.y());
+#ifdef DEBUG
+            cout << "  Shore search (" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
+#endif //DEBUG
+
             if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM )
             {
+#ifdef DEBUG
+                cout << "Out of Bounds!  ";
+                cout << "(" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
+#endif //DEBUG
+
                 return(false);
             }
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
@@ -447,13 +462,24 @@ bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos)
     } 
     else 
     {
+#ifdef DEBUG
+        cout << "Landed search" << endl;
+#endif //DEBUG
         while( y >= waterLevel )
         {
-            viewerPos.setX( viewerPos.x() + dir.x());
-            viewerPos.setZ( viewerPos.z() + dir.y());
+            viewerPos.setX( viewerPos.x() + searchDir.x());
+            viewerPos.setZ( viewerPos.z() + searchDir.y());
+#ifdef DEBUG
+            cout << "  Beach search (" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
+#endif //DEBUG
             if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM )
             {
-                return(false);
+#ifdef DEBUG
+                cout << "Out of Bounds!  ";
+                cout << "(" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
+#endif //DEBUG
+
+                return (false);
             }
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
         }
@@ -461,8 +487,8 @@ bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos)
     }
 
     // Now we found the edge of the water.  Back off a set amount
-    viewerPos.setX( viewerPos.x() - dir.x() * WATER_START_PROX);
-    viewerPos.setZ( viewerPos.z() - dir.y() * WATER_START_PROX);
+    viewerPos.setX( viewerPos.x() - searchDir.x() * WATER_START_PROX);
+    viewerPos.setZ( viewerPos.z() - searchDir.y() * WATER_START_PROX);
 
     return(true);
 }
