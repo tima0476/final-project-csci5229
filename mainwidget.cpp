@@ -16,9 +16,9 @@ MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
     geometries(0),
     skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-    viewerPos(-WORLD_DIM*0.5f, 0, WORLD_DIM*0.5f),
-    lookDir(0.707106781f,0,-0.707106781f),
-    th(-45.0f), ph(0.0f)
+    viewerPos(-WORLD_DIM, 0, WORLD_DIM),
+    lookDir(0.7f, 0.0f, 0.7f),
+    th(225.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -127,7 +127,10 @@ void MainWidget::initializeGL()
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
-    // land terrain was already generated in the geometry constructor.  Set our eye initial height based on the terrain
+    // Adjust starting position to be near the lake.
+    geometries->adjustViewerPos(viewerPos);
+
+    // Set our eye initial height based on the terrain
     viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
 }
 

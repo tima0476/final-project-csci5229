@@ -105,6 +105,9 @@ void GeometryEngine::initLandGeometry()
     }
     landAvg /= LAND_DIVS*LAND_DIVS;
 
+    //
+    // Now create the facets (index) array
+    //
     GLuint indices[2 * LAND_DIVS * LAND_DIVS - 4];
     GLuint *pi = indices; // Use a walking pointer to fill the facet array since we occasionally need to repeat some indices
 
@@ -412,10 +415,54 @@ void GeometryEngine::diamondStep(int x, int z, int reach)
 }
 
 // return the y height of the land grid at (x,z)
-float GeometryEngine::getHeight(float wx, float wz)
+float GeometryEngine::getHeight(float wx, float wz, bool stayAbove)
 {
     // Translate world coordinates to land vertex coordinates
     int x = int((wx + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
     int z = int((wz + WORLD_DIM) * LAND_DIVS / (WORLD_DIM * 2.0f) + 0.5f);
-    return(MAX(landVerts[Coord_2on1(x,z)].position.y(), waterLevel));   // Don't go below water
+    if (stayAbove)
+        return(MAX(landVerts[Coord_2on1(x,z)].position.y(), waterLevel));   // Don't go below water
+    else
+        return(landVerts[Coord_2on1(x,z)].position.y());
+}
+
+bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos)
+{
+    // Find the edge of the water.
+    float y = getHeight(viewerPos.x(), viewerPos.z(), false);
+    QVector2D dir(0.7f,-0.7f);
+    if (y < waterLevel)
+    {
+        dir *= -1.0f;
+        while( y < waterLevel )
+        {
+            viewerPos.setX( viewerPos.x() + dir.x());
+            viewerPos.setZ( viewerPos.z() + dir.y());
+            if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM )
+            {
+                return(false);
+            }
+            y = getHeight(viewerPos.x(), viewerPos.z(), false);
+        }
+    } 
+    else 
+    {
+        while( y >= waterLevel )
+        {
+            viewerPos.setX( viewerPos.x() + dir.x());
+            viewerPos.setZ( viewerPos.z() + dir.y());
+            if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM )
+            {
+                return(false);
+            }
+            y = getHeight(viewerPos.x(), viewerPos.z(), false);
+        }
+
+    }
+
+    // Now we found the edge of the water.  Back off a set amount
+    viewerPos.setX( viewerPos.x() - dir.x() * WATER_START_PROX);
+    viewerPos.setZ( viewerPos.z() - dir.y() * WATER_START_PROX);
+
+    return(true);
 }
