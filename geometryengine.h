@@ -17,7 +17,7 @@
 #define LAND_TEX_REPS   25      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM       20.0f   // Half the width & depth & height of the world
 #define TERRAIN_RANGE   2.0f    // The maximum height range of the terrain
-#define TERRAIN_SMOOTH  15.0f   // Larger numbers give smoother terrain
+#define TERRAIN_SMOOTH  10.0f   // Larger numbers give smoother terrain
 #define WATER_LEVEL     -1.5f   // elevation of water surface as offset from avg
 #define WATER_TEX_REPS  25.0f   // number of times to repeat the water texture
 

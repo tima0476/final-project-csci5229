@@ -61,7 +61,7 @@ void GeometryEngine::initLandGeometry()
                     -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),           // Vertex z
 
                 // Normal vertex
-                QVector3D(0.0f, 1.0f, 0.0f),    // refine later after random terrain generated
+                QVector3D(),                                            // refine later after random terrain generated
                 
                 // Texture Coordinate
                 QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS) // Texture Coordinate
@@ -81,14 +81,27 @@ void GeometryEngine::initLandGeometry()
     // Randomize the terrain heights
     diamondSquare(LAND_DIVS, true);
 
-    // scan landmass for average elevation (for placing water level)
-    for (int i=0; i<LAND_DIVS*LAND_DIVS; i++)
+    // Calculate average normals, and also calculate the average elevation for use in determining the water level
+    landAvg = 0.0;
+    for (int zi = 0; zi < LAND_DIVS; zi++)
     {
-        float y = landVerts[i].position.y();
-        if (i)
-            landAvg += y;
-        else
-            landAvg = y;
+        for (int xi = 0; xi < LAND_DIVS; xi++)
+        {
+            QVector3D p = landVerts[Coord_2on1(xi,zi)].position;
+
+            // Calculate the direction vector to the adjacent grid points.  Handle "edge of the grid" cases with zero vectors
+            // because they will then "drop out" when used in a cross-product.  (default QVector3d with null constructor is zero)
+            QVector3D va;   if (zi)             va = landVerts[Coord_2on1(xi  ,zi-1)].position - p;
+            QVector3D vb;   if (xi<LAND_DIVS-1) vb = landVerts[Coord_2on1(xi+1,zi  )].position - p;
+            QVector3D vc;   if (zi<LAND_DIVS-1) vc = landVerts[Coord_2on1(xi  ,zi+1)].position - p;
+            QVector3D vd;   if (xi)             vd = landVerts[Coord_2on1(xi-1,zi  )].position - p;
+
+            // Magnitude of the normal vector doesn't matter, so just do a simple sum to get a vector pointing in the average direction.
+            // Edge cases will drop out due to having one vector (edge) or both vectors (corner) being zero.
+            landVerts[Coord_2on1(xi,zi)].normal = QVector3D::crossProduct(vb,va) + QVector3D::crossProduct(vc,vb) +
+                    QVector3D::crossProduct(vd,vc) + QVector3D::crossProduct(vd,va);
+            landAvg += p.y();
+        }
     }
     landAvg /= LAND_DIVS*LAND_DIVS;
 
