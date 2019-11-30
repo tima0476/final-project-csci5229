@@ -24,12 +24,18 @@
 // Convenience macros to improve readability
 #define Coord_2on1(X,Z) ((Z)*LAND_DIVS + (X))
 #define Frand(RANGE)    (float(rand()) * float(RANGE) / float(RAND_MAX))
-#define MIN(X,Y)        ((X)>(Y) ? (Y) : (X))
 #define MAX(X,Y)        ((X)>(Y) ? (X) : (Y))
 
 struct unlitVertexData
 {
     QVector3D position;
+    QVector2D texCoord;
+};
+
+struct vertexData
+{
+    QVector3D position;
+    QVector3D normal;
     QVector2D texCoord;
 };
 
@@ -53,7 +59,7 @@ private:
     void squareStep(int x, int z, int reach);
     void diamondStep(int x, int z, int reach);
 
-    unlitVertexData landVerts[LAND_DIVS*LAND_DIVS];     // Make this array a class member so we don't have to 
+    vertexData landVerts[LAND_DIVS*LAND_DIVS];     // Make this array a class member so we don't have to 
                                                         // pass it around on the stack
 
     QOpenGLBuffer skyVertBuf;
@@ -63,7 +69,7 @@ private:
     QOpenGLBuffer waterVertBuf;
     QOpenGLBuffer waterFacetsBuf;
 
-    float landLow, landHigh, landAvg, waterLevel;
+    float landAvg, waterLevel;
 };
 
 #endif // GEOMETRYENGINE_H

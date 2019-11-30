@@ -127,7 +127,7 @@ void MainWidget::initializeGL()
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
-    // land terrain was generated in the geometry constructor.  Set our eye initial height based on the terrain
+    // land terrain was already generated in the geometry constructor.  Set our eye initial height based on the terrain
     viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
 }
 
@@ -153,8 +153,6 @@ void MainWidget::initShaders()
         close();
 }
 
-
-
 void MainWidget::initTextures()
 {
     // Load textures
@@ -178,20 +176,15 @@ void MainWidget::initTextures()
     waterTexture->setWrapMode(QOpenGLTexture::Repeat);
 }
 
-
-
 void MainWidget::resizeGL(int w, int h)
 {
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    // Set near plane to 3/16, far plane to 3*16, field of view 55 degrees
-    const qreal zNear = 0.1, zFar = 60.0, fov = 55.0;
-
-    // Reset projection
-    projection.setToIdentity();
+    const qreal zNear = 3.0f/WORLD_DIM, zFar = 3.0f*WORLD_DIM, fov = 55.0;
 
     // Set perspective projection
+    projection.setToIdentity();
     projection.perspective(fov, aspect, zNear, zFar);
 }
 
@@ -203,8 +196,10 @@ void MainWidget::paintGL()
 
     // Calculate model view transformation
     QMatrix4x4 matrix;
-
     matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));
+
+    // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
+    QVector3D lightPos( WORLD_DIM, WORLD_DIM/2.0f, -WORLD_DIM/2.0f);
 
     // Bind skybox shader pipeline for use
     if (!skyProgram.bind())
@@ -224,7 +219,10 @@ void MainWidget::paintGL()
         close();
 
     // Set modelview-projection matrix
+    mainProgram.setUniformValue("mv_matrix", matrix);
     mainProgram.setUniformValue("mvp_matrix", projection * matrix);
+    mainProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
+    mainProgram.setUniformValue("lightPosition", lightPos);
 
     // Draw the land
     mainProgram.setUniformValue("texture", 0);
