@@ -8,7 +8,7 @@
 #ifndef GEOMETRYENGINE_H
 #define GEOMETRYENGINE_H
 
-#define DEBUG
+// #define DEBUG
 
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
@@ -79,3 +79,4 @@ private:
 };
 
 #endif // GEOMETRYENGINE_H
+

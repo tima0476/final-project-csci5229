@@ -492,3 +492,5 @@ bool GeometryEngine::adjustViewerPos(QVector3D & viewerPos, QVector2D searchDir)
 
     return(true);
 }
+
+

@@ -12,9 +12,9 @@ uniform mat4 mv_matrix;
 uniform mat3 normalMatrix;
 uniform vec3 lightPosition;
 
-attribute vec4 a_position;
-attribute vec3 a_normal;
-attribute vec2 a_texcoord;
+attribute vec4 a_position;  // bind this to vertex coordinate array
+attribute vec3 a_normal;    // Array of normals
+attribute vec2 a_texcoord;  // Array of texture coordinates 
 
 varying vec2 v_texcoord;
 varying vec3 View;
