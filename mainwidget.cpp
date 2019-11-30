@@ -122,7 +122,7 @@ void MainWidget::initializeGL()
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     // Instantiate our geometry engine
     geometries = new GeometryEngine;

@@ -154,7 +154,7 @@ void GeometryEngine::initWaterGeometry()
     };
     
     GLushort indices[] = {
-        1, 1, 0, 3, 2, 2
+        0, 2, 1, 3
     };
 
     waterVertBuf.bind();

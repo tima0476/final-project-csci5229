@@ -39,9 +39,9 @@ void main()
     // Hack:  For now, just hard-code the material properties.  Figure out how to plug material properties into
     //          Qt sometime later.
     vec4 color = vec4(0,0,0,1)                  // Emission
-                + vec4(0.8,0.8,0.8,1.0)         // Ambient
+                + vec4(0.5,0.5,0.5,1.0)         // Ambient
                 + Id*vec4(0.4,0.4,0.4,1.0)      // Diffuse
-                + Is*vec4(0.1,0.1,0.1,1.0);     // Specular
+                + Is*vec4(0.2,0.2,0.2,1.0);     // Specular
 
     //  Apply texture
     gl_FragColor = color * texture2D(texture,v_texcoord);
