@@ -11,10 +11,10 @@
 #include <QMouseEvent>
 
 #include <math.h>
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
 #include <iostream>
 using namespace std;
-#endif // DEBUG
+#endif // DEBUG_GEOM
 
 MainWidget::MainWidget(QWidget *parent) :
     QOpenGLWidget(parent),
@@ -81,9 +81,9 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
             close();            
     }
 
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
     cout << "(" << viewerPos.x() << "," << viewerPos.y() << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG
+#endif //DEBUG_GEOM
     // Allow the base class to also handle all keypress events
     QOpenGLWidget::keyPressEvent(e);
 
@@ -145,9 +145,9 @@ void MainWidget::initializeGL()
     while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM/2.0f,-WORLD_DIM).normalized()) && retries--)
     {
         // No lake found.  Delete this world and make another one
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
         cout << "MULLIGAN!" << endl;
-#endif //DEBUG
+#endif //DEBUG_GEOM
         delete geometries;
         geometries = new GeometryEngine;
     }
@@ -159,30 +159,30 @@ void MainWidget::initializeGL()
     QVector3D testVec(-Sin(th)*WATER_START_PROX*3.0f, 0, -Cos(th)*WATER_START_PROX*3.0);
     QVector3D testLoc(viewerPos+testVec);
     bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
     cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
-#endif //DEBUG
+#endif //DEBUG_GEOM
     float inc(startAbove ? 1.0f : -1.0f);
     bool curr(startAbove);
     while (startAbove == (curr=geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
     {
         th += inc;
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
         cout << "th=" << th << "; ";
-#endif // DEBUG
+#endif // DEBUG_GEOM
         testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
         testLoc = viewerPos+testVec;
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
         cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
-#endif // DEBUG        
+#endif // DEBUG_GEOM        
     }
     if (th <= -720.0f || th >= 720.f)
         // The simplistic shoreline search failed.  Revert to a default lookdir
         th = 247.0f;
 
-#ifdef DEBUG
+#ifdef DEBUG_GEOM
     cout << "Final lookDir = " << th << endl;
-#endif // DEBUG
+#endif // DEBUG_GEOM
     lookDir.setX(-Sin(th)*Cos(ph));
     lookDir.setY(Sin(ph));
     lookDir.setZ(-Cos(th)*Cos(ph));

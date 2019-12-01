@@ -8,11 +8,12 @@
 #ifndef GEOMETRYENGINE_H
 #define GEOMETRYENGINE_H
 
-// #define DEBUG
+// #define DEBUG_GEOM
 
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
+#include "wavefrontObj.h"
 
 #define LAND_DIVS           513     // Number of divisions in each cardinal direction for the land grid.  The "Diamond Square" 
                                     // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
@@ -76,6 +77,7 @@ private:
     QOpenGLBuffer waterFacetsBuf;
 
     float landAvg, waterLevel;
+    wavefrontObj spruce;
 };
 
 #endif // GEOMETRYENGINE_H

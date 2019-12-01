@@ -20,16 +20,22 @@
 #include <QFile>
 #include <QTextStream>
 
+#define DEBUG_OBJ
+
 struct materialData
 {
     QString name;
-    float Ns;              // Specular exponent
-    QVector4D Ka, Kd, Ks;  // Ambient, Diffuse, and Specular colors
-    float d;               // transparency [0..1]; 0.0 = fully transparent, 1.0 = fully opaque
-    QOpenGLTexture *map_d; // Alpha texture map
+    float Ns;               // Specular exponent
+    QVector4D Ka, Kd, Ks;   // Ambient, Diffuse, and Specular colors
+    float d;                // transparency [0..1]; 0.0 = fully transparent, 1.0 = fully opaque
+    QString map_d_filename; // Alpha texture map filename
 
-    materialData(QString name = "");
-    ~materialData();
+    materialData(QString name = "") : name(name),
+                                      Ns(0),
+                                      Ka(0, 0, 0, 1),
+                                      Kd(0, 0, 0, 1),
+                                      Ks(0, 0, 0, 1),
+                                      d(0) {}
 };
 
 struct indexTriple
@@ -37,7 +43,9 @@ struct indexTriple
     // Facet indices (obj files index the v, vt, and vn arrays independently)
     GLuint v, vt, vn;
 
-    indexTriple(GLuint v = 0, GLuint vt = 0, GLuint vn = 0) : v(v), vt(vt), vn(vn) {}
+    indexTriple(GLuint v = 0, GLuint vt = 0, GLuint vn = 0) : v(v),
+                                                              vt(vt),
+                                                              vn(vn) {}
 };
 
 struct objectSection
@@ -62,6 +70,7 @@ class wavefrontObj
 public:
     wavefrontObj(QString filename);
     bool loadObj(QString filename);
+    void debugDump(void);
 
 protected:
 private:

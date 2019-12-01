@@ -12,6 +12,8 @@
 #include "wavefrontObj.h"
 
 #include <iostream>
+#include <string>
+
 using namespace std;
 
 wavefrontObj::wavefrontObj(QString filename)
@@ -21,13 +23,18 @@ wavefrontObj::wavefrontObj(QString filename)
 
 bool wavefrontObj::loadObj(QString filename)
 {
-    QFile infile(QString(":/obj/") + filename);
+    QString fn(":/obj/" + filename);
+    QFile infile(fn);
     if (infile.open(QFile::ReadOnly | QFile::Text))
     {
         QTextStream in(&infile);
         QString line;
         while (in.readLineInto(&line))
         {
+            if (line.isEmpty())
+            {
+                continue; // skip blank lines else token[0] will segfault
+            }
             QStringList token = line.split(' ', QString::SkipEmptyParts);
             QString cmd = token[0]; // The first token on a line is the command
             if (cmd == "v")
@@ -83,7 +90,7 @@ bool wavefrontObj::loadObj(QString filename)
                     }
                     else
                     {
-                        cerr << "Invalid facet " << token[i].constData() << endl;
+                        cerr << "Invalid facet " << token[i].toStdString() << endl;
                         return false;
                     }
                 }
@@ -103,9 +110,15 @@ bool wavefrontObj::loadObj(QString filename)
     }
     else
     {
-        cerr << "Cannot open file " << filename.constData() << endl;
+        cerr << "Cannot open file " << filename.toStdString() << endl;
+#ifdef DEBUG_OBJ
+        debugDump();
+#endif // DEBUG_OBJ
         return false;
     }
+#ifdef DEBUG_OBJ
+    debugDump();
+#endif // DEBUG_OBJ
     return true;
 }
 
@@ -124,12 +137,13 @@ bool wavefrontObj::setMaterial(QString name)
             return true;
         }
     }
-    cerr << "Unknown material " << name.constData() << endl;
+    cerr << "Unknown material " << name.toStdString() << endl;
     return false;
 }
 
 bool wavefrontObj::loadMaterialFile(QString filename)
 {
+    QString fn(":/obj/" + filename);
     QFile infile(QString(":/obj/") + filename);
     if (infile.open(QFile::ReadOnly | QFile::Text))
     {
@@ -137,7 +151,13 @@ bool wavefrontObj::loadMaterialFile(QString filename)
         QString line;
         while (in.readLineInto(&line))
         {
+            if (line.isEmpty())
+            {
+                continue; // skip blank lines else token[0] will segfault
+            }
+
             QStringList token = line.split(' ', QString::SkipEmptyParts);
+
             QString cmd = token[0]; // First token on a line is the command
             if (cmd == "newmtl")
             {
@@ -151,7 +171,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.constData() << ": malformed newmtl command" << endl;
+                    cerr << "Error parsing " << filename.toStdString() << ": malformed newmtl command" << endl;
                 }
             }
             else if (material.isEmpty())
@@ -169,7 +189,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.constData() << ": malformed Ka command" << endl;
+                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ka command" << endl;
                 }
             }
             else if (cmd == "Kd")
@@ -183,7 +203,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.constData() << ": malformed Kd command" << endl;
+                    cerr << "Error parsing " << filename.toStdString() << ": malformed Kd command" << endl;
                 }
             }
             else if (cmd == "Ks")
@@ -197,7 +217,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.constData() << ": malformed Ks command" << endl;
+                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ks command" << endl;
                 }
             }
             else if (cmd == "Ns")
@@ -209,48 +229,29 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.constData() << ": malformed Ns command" << endl;
+                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ns command" << endl;
                 }
             }
             else if (cmd == "map_Kd")
             {
-                // one filename for a Texture
-                if (token.size() == 2)
-                {
-                    // Avoid memory leaks in case we have a malformed mtl file with two map_kd in a single material def'n
-                    if (material.last().map_d != NULL)
-                        delete material.last().map_d;
-
-                    QString fn = ":/obj/" + token[1];
-                    material.last().map_d = new QOpenGLTexture(QImage(fn).mirrored());
-                }
-                else
-                {
-                    cerr << "Error parsing " << filename.constData() << ": malformed map_Kd command" << endl;
-                }
+                // Texture.  Everything after the command is the filename
+                material.last().map_d_filename = ":/obj/" + line.right(line.size() - token[0].size()).trimmed();
             }
         }
     }
     else
     {
-        cerr << "Cannot open materials file " << filename.constData() << endl;
+        cerr << "Cannot open materials file " << filename.toStdString() << endl
+             << endl;
         return false;
     }
+
     return true;
 }
 
-materialData::materialData(QString name) : name(name),
-                                           Ns(0),
-                                           Ka(0, 0, 0, 1),
-                                           Kd(0, 0, 0, 1),
-                                           Ks(0, 0, 0, 1),
-                                           d(0),
-                                           map_d(NULL)
+void wavefrontObj::debugDump(void)
 {
-}
-
-materialData::~materialData()
-{
-    if (map_d != NULL)
-        delete map_d;
+    cout << "wavefrontObj::debugDump()" << endl;
+    cout << endl
+         << endl;
 }

@@ -6,8 +6,8 @@ Ka 0.000000 0.000000 0.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.000000 0.000000 0.000000
 d 0.000000
-map_Kd Spruce branches.png
-map_d Spruce branches.png
+map_Kd Spruce-branches.png
+map_d Spruce-branches.png
 
 
 newmtl SpruceTrunk
@@ -16,5 +16,5 @@ Ka 0.000000 0.000000 0.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.000000 0.000000 0.000000
 d 1.000000
-map_Kd Spruce trunk.jpeg
+map_Kd Spruce-trunk.jpeg
 
