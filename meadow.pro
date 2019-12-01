@@ -8,12 +8,12 @@ SOURCES += main.cpp
 SOURCES += \
     mainwidget.cpp \
     geometryengine.cpp \
-    vboindexer.cpp
+    wavefrontObj.cpp
 
 HEADERS += \
     mainwidget.h \
     geometryengine.h \
-    vboindexer.h
+    wavefrontObj.h
 
 RESOURCES += \
     shaders.qrc \
