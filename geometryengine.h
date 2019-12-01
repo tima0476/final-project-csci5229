@@ -38,8 +38,8 @@ struct unlitVertexData
 struct vertexData
 {
     QVector3D position;
-    QVector3D normal;
     QVector2D texCoord;
+    QVector3D normal;
 };
 
 class GeometryEngine : protected QOpenGLFunctions

@@ -61,15 +61,15 @@ void GeometryEngine::initLandGeometry()
             landVerts[Coord_2on1(xi,zi)] = {
                 // Vertex
                 QVector3D(
-                    -WORLD_DIM + (WORLD_DIM * 2.0f * xfrac),            // Vertex x
-                    -2.0f,                                              // Vertex y (default flat terrain will be refined below)
-                    -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),           // Vertex z
-
-                // Normal vertex
-                QVector3D(),                                            // compute later after random terrain generated
+                    -WORLD_DIM + (WORLD_DIM * 2.0f * xfrac),                // Vertex x
+                    -2.0f,                                                  // Vertex y (default flat terrain will be refined below)
+                    -WORLD_DIM + (WORLD_DIM * 2.0f * zfrac)),               // Vertex z
                 
                 // Texture Coordinate
-                QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS) // Texture Coordinate
+                QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS),    // Texture Coordinate
+
+                // Normal vertex
+                QVector3D()                                                 // compute later after random terrain generated
             };
         }
     }
@@ -155,10 +155,10 @@ void GeometryEngine::initWaterGeometry()
 
     vertexData vertices[] = {
         // Vertex data for water surface plane
-        {QVector3D(-WORLD_DIM, waterLevel, -WORLD_DIM), QVector3D(0.0f, 1.0f, 0.0f), QVector2D(0.0f,           WATER_TEX_REPS)},
-        {QVector3D( WORLD_DIM, waterLevel, -WORLD_DIM), QVector3D(0.0f, 1.0f, 0.0f), QVector2D(WATER_TEX_REPS, WATER_TEX_REPS)},
-        {QVector3D(-WORLD_DIM, waterLevel,  WORLD_DIM), QVector3D(0.0f, 1.0f, 0.0f), QVector2D(0.0f,           0.0f)},
-        {QVector3D( WORLD_DIM, waterLevel,  WORLD_DIM), QVector3D(0.0f, 1.0f, 0.0f), QVector2D(WATER_TEX_REPS, 0.0f)},
+        {QVector3D(-WORLD_DIM, waterLevel, -WORLD_DIM), QVector2D(0.0f,           WATER_TEX_REPS), QVector3D(0.0f, 1.0f, 0.0f)},
+        {QVector3D( WORLD_DIM, waterLevel, -WORLD_DIM), QVector2D(WATER_TEX_REPS, WATER_TEX_REPS), QVector3D(0.0f, 1.0f, 0.0f)},
+        {QVector3D(-WORLD_DIM, waterLevel,  WORLD_DIM), QVector2D(0.0f,           0.0f          ), QVector3D(0.0f, 1.0f, 0.0f)},
+        {QVector3D( WORLD_DIM, waterLevel,  WORLD_DIM), QVector2D(WATER_TEX_REPS, 0.0f          ), QVector3D(0.0f, 1.0f, 0.0f)},
     };
     
     GLushort indices[] = {
@@ -267,17 +267,7 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(vertexLocation);
     program->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
-    
-    // Offset for normals
-    offset += sizeof(QVector3D);
-
-    // Tell OpenGL programmable pipeline how to locate vertex normal data
-    int normalLocation = program->attributeLocation("a_normal");
-    program->enableAttributeArray(normalLocation);
-    program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
-
-    
-    // Offset for texture coordinate
+    // Offset for texture coordinate (aka uvs)
     offset += sizeof(QVector3D);
 
     // Tell OpenGL programmable pipeline how to locate vertex texture coordinate data
@@ -285,6 +275,16 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(texcoordLocation);
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(vertexData));
 
+    
+    // Offset for normals
+    offset += sizeof(QVector2D);
+
+    // Tell OpenGL programmable pipeline how to locate vertex normal data
+    int normalLocation = program->attributeLocation("a_normal");
+    program->enableAttributeArray(normalLocation);
+    program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
+
+    // Now the plumbing is hooked up, draw what's in the buffer!
     glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size()/sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
 }
 
@@ -303,15 +303,6 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
     
-    // Offset for normals
-    offset += sizeof(QVector3D);
-
-    // Tell OpenGL programmable pipeline how to locate vertex normal data
-    int normalLocation = program->attributeLocation("a_normal");
-    program->enableAttributeArray(normalLocation);
-    program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
-
-    
     // Offset for texture coordinate
     offset += sizeof(QVector3D);
 
@@ -320,6 +311,16 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(texcoordLocation);
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(vertexData));
 
+
+    // Offset for normals
+    offset += sizeof(QVector2D);
+
+    // Tell OpenGL programmable pipeline how to locate vertex normal data
+    int normalLocation = program->attributeLocation("a_normal");
+    program->enableAttributeArray(normalLocation);
+    program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
+
+    // Now the plumbing is hooked up, draw what's in the buffer!
     glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size()/sizeof(GLuint), GL_UNSIGNED_INT, 0);
 }
 
