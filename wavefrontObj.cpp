@@ -21,7 +21,7 @@ wavefrontObj::wavefrontObj(QString filename)
 
 bool wavefrontObj::loadObj(QString filename)
 {
-    QFile infile(filename);
+    QFile infile(QString(":/obj/") + filename);
     if (infile.open(QFile::ReadOnly | QFile::Text))
     {
         QTextStream in(&infile);
@@ -130,7 +130,7 @@ bool wavefrontObj::setMaterial(QString name)
 
 bool wavefrontObj::loadMaterialFile(QString filename)
 {
-    QFile infile(filename);
+    QFile infile(QString(":/obj/") + filename);
     if (infile.open(QFile::ReadOnly | QFile::Text))
     {
         QTextStream in(&infile);
