@@ -37,7 +37,12 @@ bool wavefrontObj::loadObj(QString filename)
             }
             QStringList token = line.split(' ', QString::SkipEmptyParts);
             QString cmd = token[0]; // The first token on a line is the command
-            if (cmd == "v")
+            if (cmd == "o")
+            {
+                // Object name.  Everything after the command is the name
+                data.name = line.right(line.size() - cmd.size()).trimmed();
+            }
+            else if (cmd == "v")
             {
                 // Vertex coordinates (spec says can be 3 or 4, but we will assume only 3)
                 data.v << QVector3D(token[1].toFloat(), token[2].toFloat(), token[3].toFloat());
@@ -171,7 +176,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.toStdString() << ": malformed newmtl command" << endl;
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed newmtl command" << endl;
                 }
             }
             else if (material.isEmpty())
@@ -189,7 +194,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ka command" << endl;
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed Ka command" << endl;
                 }
             }
             else if (cmd == "Kd")
@@ -203,7 +208,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.toStdString() << ": malformed Kd command" << endl;
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed Kd command" << endl;
                 }
             }
             else if (cmd == "Ks")
@@ -217,7 +222,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ks command" << endl;
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed Ks command" << endl;
                 }
             }
             else if (cmd == "Ns")
@@ -229,7 +234,19 @@ bool wavefrontObj::loadMaterialFile(QString filename)
                 }
                 else
                 {
-                    cerr << "Error parsing " << filename.toStdString() << ": malformed Ns command" << endl;
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed Ns command" << endl;
+                }
+            }
+            else if (cmd == "d")
+            {
+                // One float for the dissolve factor
+                if (token.size() == 2)
+                {
+                    material.last().d = token[1].toFloat();
+                }
+                else
+                {
+                    cerr << "Warning while parsing " << filename.toStdString() << ": malformed d command" << endl;
                 }
             }
             else if (cmd == "map_Kd")
@@ -249,9 +266,50 @@ bool wavefrontObj::loadMaterialFile(QString filename)
     return true;
 }
 
+// A better way would be to subclass the QVector classes and provide toStr() methods, but this is more expedient 
+// in the short term...
+#define V2(X) "(" << (X).x() << "," << (X).y() << ")"
+#define V3(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << ")"
+#define V4(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w() << ")"
+
 void wavefrontObj::debugDump(void)
 {
-    cout << "wavefrontObj::debugDump()" << endl;
+    cout << "wavefrontObj::debugDump()..." << endl;
+
+    cout << "Name = '" << data.name.toStdString() << "'" << endl;
+    
+    cout << data.v.size() << " vertices:" << endl;
+    for (int i = 0; i < data.v.size(); i++)
+        cout << "  " << V3(data.v[i]) << endl;
+
+    cout << data.vt.size() << " texture coordinates:" << endl;
+    for (int i = 0; i < data.vt.size(); i++)
+        cout << "  " << V2(data.vt[i]) << endl;
+
+    cout << data.vn.size() << " normals:" << endl;
+    for (int i = 0; i < data.vn.size(); i++)
+        cout << "  " << V3(data.vn[i]) << endl;
+
+    cout << data.section.size() << " object sections:" << endl;
+
+    for (int i = 0; i < data.section.size(); i++)
+    {
+        cout << "  Dump section " << i+1 << "..." << endl;
+        objectSection *s = &data.section[i];
+        cout << "    Material '" << s->mtl.name.toStdString() << "'" << endl;
+        cout << "                  Ns = " << s->mtl.Ns << endl;
+        cout << "                  Ka = " << V4(s->mtl.Ka) << endl;
+        cout << "                  Kd = " << V4(s->mtl.Kd) << endl;
+        cout << "                  Ks = " << V4(s->mtl.Ks) << endl;
+        cout << "                   d = " <<s->mtl. d << endl;
+        cout << "      map_d_filename = '" << s->mtl.map_d_filename.toStdString() << "'" << endl;
+        cout << "    " << s->f.size() << " facets:" << endl;
+        for (int j = 0; j < s->f.size(); j++)
+        {
+            cout << "      v=" << s->f[j].v << "  vt=" << s->f[j].vt << "  vn=" << s->f[j].vn << endl;
+        }
+    }
+
     cout << endl
          << endl;
 }
