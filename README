@@ -1,3 +1,100 @@
 Final Project
 Timothy Mason
 Computer Science 5229 - Computer Graphics
+
+Total time so far:  85 hours
+
+!! IF THE PROGRAM STARTS WITH A NON-SENSICAL OR BLANK SCENE DISPLAYED, PLEASE TRY JUST EXITING AND RESTARTING,  
+   I know that's not ideal.  Improving the startup experience is a top priority prior to final submission.
+
+Compilation:
+    first run 'qmake' followed by 'make'.
+    In Linux, the application will be in the main folder:  ./meadow
+    
+Controls:
+    Mouse: click and drag to look around
+        W:  Move forward
+        S:  Move backwards
+        A:  Move left (sideways)
+        D:  Move right (sideways)
+      Esc:  Exit
+        Q:  Exit
+
+This program was originally intended as a simulation of a mountain meadow with a lake, but it
+turned into more of a mountain lake scene (not so much a meadow).  It is implemented in C++
+using the Qt5 framework.  It is using 100% programmable shaders, and everything except the skybox
+uses per-pixel lighting.  The shader used for the trees also uses alpha-channel based texture
+cutouts to attempt realistic looking leaves.
+
+To leverage a low-polygon spruce tree obj model I found, I implemented a C++ & Qt based OBJ file
+loader.  It is based loosely on the class ex26.c, but has been completely rewritten as a C++ class
+which uses the Qt framework for dynamic arrays, image loading, and so forth.  Also, in keeping
+with coding practices demonstrated in the Qt5 example programs, my app does not use display lists.
+Instead, it is using OpenGL VBOs (Vertex Buffer Object).
+
+
+Cool Features:
+
+* The terrain is 100% randomly generated.  It should be different every time the application is run.
+  (your mileage may vary - I had an interesting issue during Linux testing where it would generate
+  exactly the same terrain every time.  I suspected something to do with the random number seed, but
+  never did get to the bottom of it).  The terrain generation uses a "diamond square" algorithm -
+  citation is below.
+* The terrain generator is implemented with an intentional bias towards creating a bowl-like landscape.
+  This was done to facilitate having a fixed water level that gives the appearance of a lake.  Sometimes
+  it comes out looking more like a marsh-land with multiple small lakes.  The resulting terrain usually
+  has a very satisfying appearance.
+* The water level is dynamically determined based on the average elevation of the terrain.
+* The starting location is dynamically determined in an attempt to have the scene always start at the 
+  shore of a lake.  It doesn't always work.  :-/
+* The initial "look at" vector is also dynamic to set the viewpoint along the shoreline.
+* There are 1000 trees scattered about the landscape, with an attempt at realistic leaves.  I'm not
+  happy with the current appearance of the trees.  They look good at a distance but fall apart when
+  close up.
+* The trees are randomly placed with restrictions - they cannot be in the middle of the water, although
+  it is allowable for them to be a little bit wet if they are near a shoreline.  They also cannot be
+  placed too closely - a minimum separation is enforced.
+
+
+Issues / To Do:
+
+* The dynamic starting location/orientation is buggy.  Sometimes it starts you outside of the world
+  (the screen will be 100% cyan colored), or too close to the edge of the world.  My algorithm for finding
+  the edge of a lake needs work.
+* The startup algorithm also needs to have "tree awareness" added so the user doesn't start in the
+  middle of a tree.
+* "keep out" regions need to be added.  It is currently possible to walk on water and walk out of the
+  world (i.e., you can walk to the edge of the skybox and keep on going).
+* The trees look terrible closeup.  The obj file I'm using looks MUCH better when imported into blender.  I
+  suspect there may be an issue with my obj loader.
+* The lighting shaders currently have hard-coded light colors & intensities (ambient, diffuse, etc).
+  This works for this type of general outdoor scene, and I may not bother to 'fix' it.
+* Other than textures, material properties are currently ignored & left at defaults.
+* I had wanted to add a cabin with particle-engine smoke coming from a chimney.  If time allows, I may
+  still attempt this.
+* Collision avoidance.  It is currently possible to walk through trees.
+* I want to add Qt widgets to display current location and orientation, as well as proving knobs and buttons
+  for making adjustments to the scene.  For example:  Adjust the number of trees, the roughness of the terrain,
+  the water level, etc,
+* If time allows, I may look into have a few different tree models.  I may also add some ground plants
+
+
+Citations / credits:
+
+Low polygon spruce tree model:
+	https://www.turbosquid.com/3d-models/3d-spruce-model/786246
+	...
+	https://www.turbosquid.com/AssetManager/Index.cfm?stgAction=getFiles&subAction=Download&intID=786246&intType=3
+
+"Diamond Square" recursive terrain generation:
+    "The idea was first introduced by Fournier, Fussell and Carpenter at SIGGRAPH 1982.":  Fournier, Alain; 
+    Fussell, Don; Carpenter, Loren (June 1982). "Computer rendering of stochastic models".  Communications 
+    of the ACM. 25 (6): 371–384.  doi:10.1145/358523.358553 
+        https://en.wikipedia.org/wiki/Diamond-square_algorithm
+    
+    My C++ implementation is based from the example code found at: 
+	https://medium.com/@nickobrien/diamond-square-algorithm-explanation-and-c-implementation-5efa891e486f
+
+
+GLSL Programming/Unity/Transparent Textures - Discarding Transparent Fragments:
+	https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Transparent_Textures

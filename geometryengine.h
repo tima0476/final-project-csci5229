@@ -8,8 +8,6 @@
 #ifndef GEOMETRYENGINE_H
 #define GEOMETRYENGINE_H
 
-// #define DEBUG_GEOM
-
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
@@ -35,12 +33,6 @@
 #define Frand(RANGE) (float(rand()) * float(RANGE) / float(RAND_MAX))
 #define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-
-#ifdef DEBUG_GEOM
-#define V2(X) "(" << (X).x() << "," << (X).y() << ")"
-#define V3(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << ")"
-#define V4(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w() << ")"
-#endif // DEBUG_GEOM
 
 // Packed structures to use for the OpenGL VBOs
 struct unlitVertexData

@@ -11,11 +11,6 @@
 #include <float.h> // for FLT_MAX
 #include <math.h>  // for sqrt()
 
-#ifdef DEBUG_GEOM
-#include <iostream>
-using namespace std;
-#endif //DEBUG_GEOM
-
 GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
                                    skyFacetsBuf(QOpenGLBuffer::IndexBuffer),
                                    landVertBuf(QOpenGLBuffer::VertexBuffer),
@@ -79,18 +74,6 @@ void GeometryEngine::initSpruceGeometry()
         // Materials properties
         materialData *mtl = &(s->mtl);
 
-#ifdef DEBUG_GEOM
-        cout << "Section " << i << " materials:" << endl;
-
-        cout << "             name: '" << mtl->name.toStdString() << "'" << endl;
-        cout << "               Ns: " << mtl->Ns << endl;                                   // Specular exponent
-        cout << "               Ka: " << V4(mtl->Ka) << endl;                               // Ambient color
-        cout << "               Kd: " << V4(mtl->Kd) << endl;                               // Diffuse color
-        cout << "               Ks: " << V4(mtl->Ks) << endl;                               // Specular color
-        cout << "                d: " << mtl->d << endl;                                    // transparency [0..1]; 0.0 = fully transparent, 1.0 = fully opaque
-        cout << "   map_d_filename: '" << mtl->map_d_filename.toStdString() << "'" << endl; // Alpha texture map filename
-        cout << endl;
-#endif  // DEBUG_GEOM
         // Set up the texture for this section
         spruceTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
         spruceTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
@@ -298,7 +281,7 @@ void GeometryEngine::initSkyCubeGeometry()
         {QVector3D(-WORLD_DIM, -WORLD_DIM, WORLD_DIM), QVector2D(0.25f, 0.0f)},         // v18
         {QVector3D(WORLD_DIM, -WORLD_DIM, WORLD_DIM), QVector2D(0.50f, 0.0f)},          // v19
 
-        // Vertex data for face 5  (Top)    (fudge a tiny bit lower and stretch texture a tiny bit to smooth annoying black seam in the sky)
+        // Vertex data for face 5  (Top)    (fudge a tiny bit lower and stretch texture a tiny bit to smooth an annoying  seam in the sky)
         {QVector3D(-WORLD_DIM, WORLD_DIM - 0.1, WORLD_DIM), QVector2D(0.26f, 0.99f)},        // v20
         {QVector3D(WORLD_DIM, WORLD_DIM - 0.1, WORLD_DIM), QVector2D(0.49f, 0.99f)},         // v21
         {QVector3D(-WORLD_DIM, WORLD_DIM - 0.1, -WORLD_DIM), QVector2D(0.26f, 2.0f / 3.0f)}, // v22

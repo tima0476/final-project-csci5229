@@ -12,7 +12,6 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QMatrix4x4>
-#include <QQuaternion>
 #include <QVector2D>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
