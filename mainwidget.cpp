@@ -18,8 +18,7 @@ using namespace std;
 MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
                                           geometries(0),
                                           skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-                                          viewerPos(0, 0, 0),
-                                          //   viewerPos(-WORLD_DIM / 2, 0, WORLD_DIM / 2),
+                                          viewerPos(-WORLD_DIM / 2, 0, WORLD_DIM / 2),
                                           lookDir(0.7f, 0.0f, -0.7f),
                                           th(315.0f), ph(0.0f)
 {
@@ -125,8 +124,7 @@ void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0, 0, 0, 1); // Sky color sampled from the skybox texture image
-    // glClearColor(0.31f, 0.43f, 0.65f, 1); // Sky color sampled from the skybox texture image
+    glClearColor(0.31f, 0.43f, 0.65f, 1); // Sky color sampled from the skybox texture image
 
     initShaders();
     initTextures();
@@ -140,52 +138,52 @@ void MainWidget::initializeGL()
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
-    // Adjust starting position to be near the lake.
-    int retries = 11;
-    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
-    {
-        // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
-#ifdef DEBUG_GEOM
-        cout << "MULLIGAN!" << endl;
-#endif //DEBUG_GEOM
-        delete geometries;
-        geometries = new GeometryEngine;
-    }
+        // Adjust starting position to be near the lake.
+        int retries = 11;
+        while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
+        {
+            // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
+    #ifdef DEBUG_GEOM
+            cout << "MULLIGAN!" << endl;
+    #endif //DEBUG_GEOM
+            delete geometries;
+            geometries = new GeometryEngine;
+        }
 
-    // Now find a lookDir that looks along the edge of the lake.
+        // Now find a lookDir that looks along the edge of the lake.
 
-    // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
-    // Keep turning until the point 3 water proximity clicks away transitions above or below water.
-    QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
-    QVector3D testLoc(viewerPos + testVec);
-    bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
-#ifdef DEBUG_GEOM
-    cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
-#endif //DEBUG_GEOM
-    float inc(startAbove ? 1.0f : -1.0f);
-    bool curr(startAbove);
-    while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
-    {
-        th += inc;
-#ifdef DEBUG_GEOM
-        cout << "th=" << th << "; ";
-#endif // DEBUG_GEOM
-        testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
-        testLoc = viewerPos + testVec;
-#ifdef DEBUG_GEOM
-        cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
-#endif // DEBUG_GEOM
-    }
-    if (th <= -720.0f || th >= 720.f)
-        // The simplistic shoreline search failed.  Revert to a default lookdir
-        th = 247.0f;
+        // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
+        // Keep turning until the point 3 water proximity clicks away transitions above or below water.
+        QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
+        QVector3D testLoc(viewerPos + testVec);
+        bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
+    #ifdef DEBUG_GEOM
+        cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
+    #endif //DEBUG_GEOM
+        float inc(startAbove ? 1.0f : -1.0f);
+        bool curr(startAbove);
+        while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
+        {
+            th += inc;
+    #ifdef DEBUG_GEOM
+            cout << "th=" << th << "; ";
+    #endif // DEBUG_GEOM
+            testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
+            testLoc = viewerPos + testVec;
+    #ifdef DEBUG_GEOM
+            cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
+    #endif // DEBUG_GEOM
+        }
+        if (th <= -720.0f || th >= 720.f)
+            // The simplistic shoreline search failed.  Revert to a default lookdir
+            th = 247.0f;
 
-#ifdef DEBUG_GEOM
-    cout << "Final lookDir = " << th << endl;
-#endif // DEBUG_GEOM
-    lookDir.setX(-Sin(th) * Cos(ph));
-    lookDir.setY(Sin(ph));
-    lookDir.setZ(-Cos(th) * Cos(ph));
+    #ifdef DEBUG_GEOM
+        cout << "Final lookDir = " << th << endl;
+    #endif // DEBUG_GEOM
+        lookDir.setX(-Sin(th) * Cos(ph));
+        lookDir.setY(Sin(ph));
+        lookDir.setZ(-Cos(th) * Cos(ph));
 
     // Set our eye initial height based on the terrain
     viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
@@ -300,14 +298,22 @@ void MainWidget::paintGL()
     if (!plantProgram.bind())
         close();
 
-    // Set modelview-projection matrix
-    plantProgram.setUniformValue("mv_matrix", matrix);
-    plantProgram.setUniformValue("mvp_matrix", projection * matrix);
-    plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
-    plantProgram.setUniformValue("lightPosition", lightPos);
+    // Draw all of the trees
+    for (int i = 0; i < TREE_COUNT; i++)
+    {
+        // Set translation matrix
+        QMatrix4x4 treePos = matrix;
+        treePos.translate(geometries->treeSpot[i].toVector3D());
+        treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
 
-    // Draw the trees
-    plantProgram.setUniformValue("texture", 0);
-    landTexture->bind();
-    geometries->drawSpruceGeometry(&plantProgram);
+        plantProgram.setUniformValue("mv_matrix", treePos);
+        plantProgram.setUniformValue("mvp_matrix", projection * treePos);
+        plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
+        plantProgram.setUniformValue("lightPosition", lightPos);
+
+        // Draw the trees
+        plantProgram.setUniformValue("texture", 0);
+        landTexture->bind();
+        geometries->drawSpruceGeometry(&plantProgram);
+    }
 }

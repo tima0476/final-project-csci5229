@@ -8,7 +8,6 @@
 #ifndef MAINWIDGET_H
 #define MAINWIDGET_H
 
-#include "geometryengine.h"
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -17,6 +16,7 @@
 #include <QVector2D>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include "geometryengine.h"
 
 //  Cosine and Sine in degrees
 #define Cos(x) (cos((x)*3.1415926/180.0))

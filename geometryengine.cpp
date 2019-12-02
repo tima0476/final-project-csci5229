@@ -5,9 +5,11 @@
 **
 ****************************************************************************/
 
-#include "geometryengine.h"
 #include <QVector2D>
 #include <QVector3D>
+#include "geometryengine.h"
+#include <float.h> // for FLT_MAX
+#include <math.h> // for sqrt()
 
 #ifdef DEBUG_GEOM
 #include <iostream>
@@ -38,6 +40,7 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
     initLandGeometry();
     initWaterGeometry();
     initSpruceGeometry();
+    placeTrees();
 }
 
 GeometryEngine::~GeometryEngine()
@@ -594,4 +597,33 @@ bool GeometryEngine::adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir)
     viewerPos.setZ(viewerPos.z() - searchDir.y() * WATER_START_PROX);
 
     return (true);
+}
+
+float GeometryEngine::closestTree(float x, float z)
+{
+    float minDist = FLT_MAX;
+    for (int i = 0; i < TREE_COUNT; i++)
+    {
+        float xd = treeSpot[i].x() - x;
+        float zd = treeSpot[i].z() - z;
+        minDist = MIN(minDist, xd * xd + zd * zd);
+    }
+    return sqrt(minDist);
+}
+
+void GeometryEngine::placeTrees(void)
+{
+    float x, y, z;
+    for (int i = 0; i < TREE_COUNT; i++)
+    {
+        do
+        {
+            x = Frand(WORLD_DIM * 2) - WORLD_DIM;
+            z = Frand(WORLD_DIM * 2) - WORLD_DIM;
+            y = getHeight(x, z, false);
+        } while (y < waterLevel || closestTree(x, z) < TREE_MIN_PROX);
+
+        // intentionally allowing possibility of some trees slightly underwater
+        treeSpot[i] = QVector4D(x, y - TREE_SINK, z, TREE_RANGE_L + Frand(TREE_RANGE_H - TREE_RANGE_L));
+    }
 }
