@@ -17,17 +17,17 @@
 
 #define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square" \
                               // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
-#define LAND_TEX_REPS 25      // The number of times the land texture repeats over the width and depth of the world
+#define LAND_TEX_REPS 40      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM 40.0f       // Half the width & depth & height of the world
 #define TERRAIN_RANGE 3.0f    // The maximum height range of the terrain
-#define TERRAIN_SMOOTH 4.0f   // Larger numbers give smoother terrain
+#define TERRAIN_SMOOTH 6.0f   // Larger numbers give smoother terrain
 #define WATER_LEVEL -1.5f     // elevation of water surface as offset from avg
-#define WATER_TEX_REPS 25.0f  // number of times to repeat the water texture
+#define WATER_TEX_REPS 35.0f  // number of times to repeat the water texture
 #define WATER_START_PROX 2.0f // Starting distance from the edge of the water
 #define TREE_COUNT 1000       // The number of trees in this world
 #define TREE_RANGE_L 0.2f     // The maximum size range of the trees (multiplier)
 #define TREE_RANGE_H 1.0f     // The maximum size range of the trees (multiplier)
-#define TREE_SINK 0.0f        // how far underground trees extend
+#define TREE_SINK 0.1f        // how far underground trees extend
 #define TREE_MIN_PROX 0.1f    // minimum distance between trees
 
 // Convenience macros to improve readability
@@ -94,6 +94,7 @@ private:
     QOpenGLBuffer waterFacetsBuf;
     QVector<QOpenGLBuffer> spruceVertBuf;
     QVector<QOpenGLBuffer> spruceFacetsBuf;
+    QVector<QOpenGLTexture *> spruceTexture;
 
     float landAvg, waterLevel;
     wavefrontObj spruce;

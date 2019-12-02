@@ -1,9 +1,14 @@
 /****************************************************************************
 **
-** Fragment shader with per-pixel lighting, texture mapping, and transparency
+** Fragment shader with per-pixel lighting and texture mapping
 **
-** Adapted from "cube" example code from the Qt5 library and class example 27
-**   https://doc.qt.io/qt-5/qtopengl-cube-example.html
+** Adapted from "cube" example code from the Qt5 library, class example 27, 
+**  and some vermillion book thrown in.
+**
+** cube example: https://doc.qt.io/qt-5/qtopengl-cube-example.html
+**
+** Oh! and this helped too:
+** https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Transparent_Textures
 **
 ****************************************************************************/
 varying vec2 v_texcoord;
@@ -12,6 +17,11 @@ varying vec3 Light;
 varying vec3 Normal;
 
 uniform sampler2D texture;
+uniform vec3 MatAmbient;
+uniform vec3 MatDiffuse;
+uniform vec3 MatSpecular;
+uniform float shininess;
+
 
 void main()
 {
@@ -38,12 +48,14 @@ void main()
 
     // Hack:  For now, just hard-code the material properties.  Figure out how to plug material properties into
     //          Qt sometime later.
-    vec4 color = vec4(0,0,0,1)                  // Emission
-                + vec4(0.1,0.5,0.1,1.0)         // Ambient
-                + Id*vec4(0.1,0.1,0.1,1.0)      // Diffuse
-                + Is*vec4(0.2,0.2,0.2,1.0);     // Specular
+    vec4 color = vec4(0.5,0.5,0.5,1)       // Ambient
+                + Id*vec4(0.3,0.3,0.3,1)   // Diffuse
+                + Is*vec4(0.1,0.1,0.1,1);     // Specular
 
     //  Apply texture
     gl_FragColor = color * texture2D(texture,v_texcoord);
-    // gl_FragColor = color * vec4(0.9, 1.0, 0.8, 1);       // "procedural" solid green texture
+    if (gl_FragColor.a < 0.5)
+    {
+        discard;
+    }
 }

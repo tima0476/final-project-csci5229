@@ -9,7 +9,7 @@
 #include <QVector3D>
 #include "geometryengine.h"
 #include <float.h> // for FLT_MAX
-#include <math.h> // for sqrt()
+#include <math.h>  // for sqrt()
 
 #ifdef DEBUG_GEOM
 #include <iostream>
@@ -45,6 +45,8 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
 
 GeometryEngine::~GeometryEngine()
 {
+    for (int i = 0; i < spruce.data.section.size(); i++)
+        delete spruceTexture[i];
     skyVertBuf.destroy();
     skyFacetsBuf.destroy();
     landVertBuf.destroy();
@@ -68,14 +70,33 @@ void GeometryEngine::initSpruceGeometry()
     // arrays.  Each vertex / index pair will represent a single "object section" such as trunk, branches
     int numSections = spruce.data.section.size();
 
-    // TODO: If time allows, go back and convert the other initXxxGeometry members to use QVector dynamic arrays - these are AWESOME!!!
     QVector<vertexData> vertex[numSections];
     QVector<GLuint> index[numSections];
 
     for (int i = 0; i < numSections; i++)
     {
-        // TODO:  Materials properties
         objectSection *s = &spruce.data.section[i];
+        // Materials properties
+        materialData *mtl = &(s->mtl);
+
+#ifdef DEBUG_GEOM
+        cout << "Section " << i << " materials:" << endl;
+
+        cout << "             name: '" << mtl->name.toStdString() << "'" << endl;
+        cout << "               Ns: " << mtl->Ns << endl;                                   // Specular exponent
+        cout << "               Ka: " << V4(mtl->Ka) << endl;                               // Ambient color
+        cout << "               Kd: " << V4(mtl->Kd) << endl;                               // Diffuse color
+        cout << "               Ks: " << V4(mtl->Ks) << endl;                               // Specular color
+        cout << "                d: " << mtl->d << endl;                                    // transparency [0..1]; 0.0 = fully transparent, 1.0 = fully opaque
+        cout << "   map_d_filename: '" << mtl->map_d_filename.toStdString() << "'" << endl; // Alpha texture map filename
+        cout << endl;
+#endif  // DEBUG_GEOM
+        // Set up the texture for this section
+        spruceTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
+        spruceTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
+        spruceTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
+        spruceTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
+
         // Iterate through the facets and build the packed vertex array to match it
         for (int j = 0; j < s->f.size(); j++)
         {
@@ -305,6 +326,9 @@ void GeometryEngine::drawSpruceGeometry(QOpenGLShaderProgram *program)
     // Cycle through the VBOs aka "object sections"
     for (int i = 0; i < spruceFacetsBuf.size(); i++)
     {
+        program->setUniformValue("texture", 0);
+        spruceTexture[i]->bind();
+
         spruceVertBuf[i].bind();
         spruceFacetsBuf[i].bind();
 
@@ -544,50 +568,24 @@ bool GeometryEngine::adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir)
     float y = getHeight(viewerPos.x(), viewerPos.z(), false);
     if (y < waterLevel)
     {
-#ifdef DEBUG_GEOM
-        cout << "Underwater search" << endl;
-#endif //DEBUG_GEOM
         while (y < waterLevel)
         {
             viewerPos.setX(viewerPos.x() - searchDir.x());
             viewerPos.setZ(viewerPos.z() - searchDir.y());
-#ifdef DEBUG_GEOM
-            cout << "  Shore search (" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG_GEOM
 
             if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM)
-            {
-#ifdef DEBUG_GEOM
-                cout << "Out of Bounds!  ";
-                cout << "(" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG_GEOM
-
                 return (false);
-            }
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
         }
     }
     else
     {
-#ifdef DEBUG_GEOM
-        cout << "Landed search" << endl;
-#endif //DEBUG_GEOM
         while (y >= waterLevel)
         {
             viewerPos.setX(viewerPos.x() + searchDir.x());
             viewerPos.setZ(viewerPos.z() + searchDir.y());
-#ifdef DEBUG_GEOM
-            cout << "  Beach search (" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG_GEOM
             if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM)
-            {
-#ifdef DEBUG_GEOM
-                cout << "Out of Bounds!  ";
-                cout << "(" << viewerPos.x() << "," << y << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG_GEOM
-
                 return (false);
-            }
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
         }
     }

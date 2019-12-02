@@ -44,9 +44,7 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
 {
     QVector3D mvDir(lookDir);
 
-    mvDir.setY(0); // For this sim, we are locked to the ground.  :-(
-    // TODO  Instead of squashing Y, point the move vector towards the appropriate (interpolated) point at eye height above
-    // the nearest terrain edge in the direction we're looking
+    mvDir.setY(0);     // For this sim, we are locked to the ground.
     mvDir.normalize(); // Move a fixed amount, even if user is starting at the sky or the ground
     mvDir *= MOVE_AMT;
 
@@ -80,9 +78,6 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         close();
     }
 
-#ifdef DEBUG_GEOM
-    cout << "(" << viewerPos.x() << "," << viewerPos.y() << "," << viewerPos.z() << ")" << endl;
-#endif //DEBUG_GEOM
     // Allow the base class to also handle all keypress events
     QOpenGLWidget::keyPressEvent(e);
 
@@ -138,52 +133,37 @@ void MainWidget::initializeGL()
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
-        // Adjust starting position to be near the lake.
-        int retries = 11;
-        while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
-        {
-            // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
-    #ifdef DEBUG_GEOM
-            cout << "MULLIGAN!" << endl;
-    #endif //DEBUG_GEOM
-            delete geometries;
-            geometries = new GeometryEngine;
-        }
+    // Adjust starting position to be near the lake.
+    int retries = 11;
+    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
+    {
+        // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
+        delete geometries;
+        geometries = new GeometryEngine;
+    }
 
-        // Now find a lookDir that looks along the edge of the lake.
+    // Now find a lookDir that looks along the edge of the lake.
 
-        // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
-        // Keep turning until the point 3 water proximity clicks away transitions above or below water.
-        QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
-        QVector3D testLoc(viewerPos + testVec);
-        bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
-    #ifdef DEBUG_GEOM
-        cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
-    #endif //DEBUG_GEOM
-        float inc(startAbove ? 1.0f : -1.0f);
-        bool curr(startAbove);
-        while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
-        {
-            th += inc;
-    #ifdef DEBUG_GEOM
-            cout << "th=" << th << "; ";
-    #endif // DEBUG_GEOM
-            testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
-            testLoc = viewerPos + testVec;
-    #ifdef DEBUG_GEOM
-            cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
-    #endif // DEBUG_GEOM
-        }
-        if (th <= -720.0f || th >= 720.f)
-            // The simplistic shoreline search failed.  Revert to a default lookdir
-            th = 247.0f;
+    // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
+    // Keep turning until the point 3 water proximity clicks away transitions above or below water.
+    QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
+    QVector3D testLoc(viewerPos + testVec);
+    bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
+    float inc(startAbove ? 1.0f : -1.0f);
+    bool curr(startAbove);
+    while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
+    {
+        th += inc;
+        testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
+        testLoc = viewerPos + testVec;
+    }
+    if (th <= -720.0f || th >= 720.f)
+        // The simplistic shoreline search failed.  Revert to a default lookdir
+        th = 247.0f;
 
-    #ifdef DEBUG_GEOM
-        cout << "Final lookDir = " << th << endl;
-    #endif // DEBUG_GEOM
-        lookDir.setX(-Sin(th) * Cos(ph));
-        lookDir.setY(Sin(ph));
-        lookDir.setZ(-Cos(th) * Cos(ph));
+    lookDir.setX(-Sin(th) * Cos(ph));
+    lookDir.setY(Sin(ph));
+    lookDir.setZ(-Cos(th) * Cos(ph));
 
     // Set our eye initial height based on the terrain
     viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
@@ -253,6 +233,8 @@ void MainWidget::resizeGL(int w, int h)
 
 void MainWidget::paintGL()
 {
+    QMatrix4x4 treePos;
+
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -263,7 +245,7 @@ void MainWidget::paintGL()
     // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
     QVector3D lightPos(-WORLD_DIM, WORLD_DIM / 2.0f, -WORLD_DIM / 2.0f);
 
-    // Bind skybox shader pipeline for use
+    // Bind skybox shader pipeline
     if (!skyProgram.bind())
         close();
 
@@ -273,9 +255,9 @@ void MainWidget::paintGL()
     // Draw the skybox
     skyProgram.setUniformValue("texture", 0);
     skyTexture->bind();
-    geometries->drawSkyCubeGeometry(&skyProgram); // Bind main shader pipeline for use
+    geometries->drawSkyCubeGeometry(&skyProgram);
 
-    // Bind land & water shader pipeline for use
+    // Bind land & water shader pipeline
     if (!mainProgram.bind())
         close();
 
@@ -294,26 +276,26 @@ void MainWidget::paintGL()
     waterTexture->bind();
     geometries->drawWaterGeometry(&mainProgram);
 
-    // Bind plant shader pipeline for use
+    // Bind plant shader pipeline
     if (!plantProgram.bind())
         close();
+
+    plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
+    plantProgram.setUniformValue("lightPosition", lightPos);
 
     // Draw all of the trees
     for (int i = 0; i < TREE_COUNT; i++)
     {
         // Set translation matrix
-        QMatrix4x4 treePos = matrix;
+        treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
+        treePos.rotate(90, 1, 0, 0);   // Compensate for spruce tree obj oriented on different
 
         plantProgram.setUniformValue("mv_matrix", treePos);
         plantProgram.setUniformValue("mvp_matrix", projection * treePos);
-        plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
-        plantProgram.setUniformValue("lightPosition", lightPos);
 
-        // Draw the trees
-        plantProgram.setUniformValue("texture", 0);
-        landTexture->bind();
+        // Draw a tree
         geometries->drawSpruceGeometry(&plantProgram);
     }
 }
