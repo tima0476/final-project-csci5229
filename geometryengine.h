@@ -15,7 +15,7 @@
 #include <QOpenGLBuffer>
 #include "wavefrontObj.h"
 
-#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square" \
+#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square"
                               // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
 #define LAND_TEX_REPS 40      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM 40.0f       // Half the width & depth & height of the world
