@@ -50,7 +50,7 @@ protected:
     
 
 private:
-    QOpenGLShaderProgram skyProgram, mainProgram;
+    QOpenGLShaderProgram skyProgram, mainProgram, plantProgram;
     GeometryEngine *geometries;
 
     QOpenGLTexture *skyTexture;

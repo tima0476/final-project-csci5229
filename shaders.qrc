@@ -4,5 +4,7 @@
         <file>ftexonly.glsl</file>
         <file>vtexlight.glsl</file>
         <file>ftexlight.glsl</file>
+        <file>vplants.glsl</file>
+        <file>fplants.glsl</file>
     </qresource>
 </RCC>

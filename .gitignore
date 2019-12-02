@@ -5,7 +5,6 @@
 *.slo
 *.lo
 *.o
-*.obj
 
 # Precompiled Headers
 *.gch
@@ -30,15 +29,14 @@
 *.exe
 *.out
 *.app
+meadow
 
 # qmake outputs
 .qmake.stash
 moc_*.*
 Makefile
+qrc*.cpp
 
 # Mac
 .DS_Store
-meadow
-qrc_meadow.cpp
-qrc_textures.cpp
-qrc_shaders.cpp
+qrc_objects.cpp

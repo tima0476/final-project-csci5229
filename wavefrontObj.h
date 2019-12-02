@@ -42,10 +42,15 @@ struct indexTriple
 {
     // Facet indices (obj files index the v, vt, and vn arrays independently)
     GLuint v, vt, vn;
+    bool edge;
 
-    indexTriple(GLuint v = 0, GLuint vt = 0, GLuint vn = 0) : v(v),
-                                                              vt(vt),
-                                                              vn(vn) {}
+    indexTriple(GLuint v = 0,
+                GLuint vt = 0,
+                GLuint vn = 0,
+                bool e = false) : v(v),
+                                  vt(vt),
+                                  vn(vn),
+                                  edge(e) {}
 };
 
 struct objectSection
@@ -68,6 +73,8 @@ struct objectData
 class wavefrontObj
 {
 public:
+    objectData data;                // Main storage
+
     wavefrontObj(QString filename);
     bool loadObj(QString filename);
     void debugDump(void);
@@ -75,7 +82,6 @@ public:
 protected:
 private:
     QVector<materialData> material; // .mtl files are parsed and the materials are stored here
-    objectData data;                // Main storage
 
     bool setMaterial(QString name);
     bool loadMaterialFile(QString filename);

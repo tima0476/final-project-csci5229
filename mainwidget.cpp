@@ -5,7 +5,6 @@
 **
 ****************************************************************************/
 
-
 #include "mainwidget.h"
 
 #include <QMouseEvent>
@@ -16,13 +15,13 @@
 using namespace std;
 #endif // DEBUG_GEOM
 
-MainWidget::MainWidget(QWidget *parent) :
-    QOpenGLWidget(parent),
-    geometries(0),
-    skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-    viewerPos(-WORLD_DIM/2, 0, WORLD_DIM/2),
-    lookDir(0.7f, 0.0f, 0.7f),
-    th(247.5f), ph(0.0f)
+MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
+                                          geometries(0),
+                                          skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
+                                          viewerPos(0, 0, 0),
+                                          //   viewerPos(-WORLD_DIM / 2, 0, WORLD_DIM / 2),
+                                          lookDir(0.7f, 0.0f, -0.7f),
+                                          th(315.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -45,40 +44,41 @@ MainWidget::~MainWidget()
 void MainWidget::keyPressEvent(QKeyEvent *e)
 {
     QVector3D mvDir(lookDir);
-    
-    mvDir.setY(0);              // For this sim, we are locked to the ground.  :-(
-    // To do:  Instead of squashing Y, point the move vector towards the appropriate (interpolated) point at eye height above
+
+    mvDir.setY(0); // For this sim, we are locked to the ground.  :-(
+    // TODO  Instead of squashing Y, point the move vector towards the appropriate (interpolated) point at eye height above
     // the nearest terrain edge in the direction we're looking
-    mvDir.normalize();          // Move a fixed amount, even if user is starting at the sky or the ground
+    mvDir.normalize(); // Move a fixed amount, even if user is starting at the sky or the ground
     mvDir *= MOVE_AMT;
 
-    switch (e->key()) {
-        case Qt::Key_W:
-            // Move forward
-            viewerPos += mvDir;
-            break;
+    switch (e->key())
+    {
+    case Qt::Key_W:
+        // Move forward
+        viewerPos += mvDir;
+        break;
 
-        case Qt::Key_S:
-            // Move backwards
-            viewerPos -= mvDir;
-            break;
-        
-        case Qt::Key_A:
-            // Move left
-            viewerPos.setX(viewerPos.x()+mvDir.z());
-            viewerPos.setZ(viewerPos.z()-mvDir.x());
-            break;
- 
-        case Qt::Key_D:
-            // Move right;
-            viewerPos.setX(viewerPos.x()-mvDir.z());
-            viewerPos.setZ(viewerPos.z()+mvDir.x());
-            break;
+    case Qt::Key_S:
+        // Move backwards
+        viewerPos -= mvDir;
+        break;
 
-        case Qt::Key_Escape:
-        case Qt::Key_Q:
-            // exit application
-            close();            
+    case Qt::Key_A:
+        // Move left
+        viewerPos.setX(viewerPos.x() + mvDir.z());
+        viewerPos.setZ(viewerPos.z() - mvDir.x());
+        break;
+
+    case Qt::Key_D:
+        // Move right;
+        viewerPos.setX(viewerPos.x() - mvDir.z());
+        viewerPos.setZ(viewerPos.z() + mvDir.x());
+        break;
+
+    case Qt::Key_Escape:
+    case Qt::Key_Q:
+        // exit application
+        close();
     }
 
 #ifdef DEBUG_GEOM
@@ -88,7 +88,7 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
     QOpenGLWidget::keyPressEvent(e);
 
     // Maintain a fixed eye height above the ground
-    viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
+    viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
 
     update();
 }
@@ -99,14 +99,14 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
     th -= (e->localPos().x() - mouseLastPosition.x()) / 3.0f;
     ph -= (e->localPos().y() - mouseLastPosition.y()) / 3.0f;
 
-    th = fmod(th, 360.0f);  // bound th within -360 to 360 degrees
-    ph = fmod(ph, 360.0f);  // bound ph within -360 to 360 degrees
-        
+    th = fmod(th, 360.0f); // bound th within -360 to 360 degrees
+    ph = fmod(ph, 360.0f); // bound ph within -360 to 360 degrees
+
     // Update the direction we're looking for the new rotation.  I'm sure there's a way to do this
     // with the Qt quaternion class, but this is straightforward to do it myself.
-    lookDir.setX(-Sin(th)*Cos(ph));
+    lookDir.setX(-Sin(th) * Cos(ph));
     lookDir.setY(Sin(ph));
-    lookDir.setZ(-Cos(th)*Cos(ph));
+    lookDir.setZ(-Cos(th) * Cos(ph));
 
     // Save the current mouse position so we can calculate a delta on the next mouse move
     mouseLastPosition = QVector2D(e->localPos());
@@ -121,12 +121,12 @@ void MainWidget::mousePressEvent(QMouseEvent *e)
     mouseLastPosition = QVector2D(e->localPos());
 }
 
-
 void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0,1,1,1);  // Cyan to match the sky
+    glClearColor(0, 0, 0, 1); // Sky color sampled from the skybox texture image
+    // glClearColor(0.31f, 0.43f, 0.65f, 1); // Sky color sampled from the skybox texture image
 
     initShaders();
     initTextures();
@@ -135,16 +135,16 @@ void MainWidget::initializeGL()
     glEnable(GL_DEPTH_TEST);
 
     // Enable back face culling
-    glEnable(GL_CULL_FACE);
+    // glEnable(GL_CULL_FACE);
 
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
     // Adjust starting position to be near the lake.
     int retries = 11;
-    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM/2.0f,-WORLD_DIM).normalized()) && retries--)
+    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
     {
-        // No lake found.  Delete this world and make another one
+        // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
 #ifdef DEBUG_GEOM
         cout << "MULLIGAN!" << endl;
 #endif //DEBUG_GEOM
@@ -152,29 +152,29 @@ void MainWidget::initializeGL()
         geometries = new GeometryEngine;
     }
 
-    // Now find a lookDir that looks along the edge of the lake.  
-    
+    // Now find a lookDir that looks along the edge of the lake.
+
     // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
     // Keep turning until the point 3 water proximity clicks away transitions above or below water.
-    QVector3D testVec(-Sin(th)*WATER_START_PROX*3.0f, 0, -Cos(th)*WATER_START_PROX*3.0);
-    QVector3D testLoc(viewerPos+testVec);
+    QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
+    QVector3D testLoc(viewerPos + testVec);
     bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
 #ifdef DEBUG_GEOM
     cout << "startAbove=" << startAbove << "; Loc is (" << viewerPos.x() << "," << viewerPos.z() << "); Water Level is " << geometries->getWaterLevel() << endl;
 #endif //DEBUG_GEOM
     float inc(startAbove ? 1.0f : -1.0f);
     bool curr(startAbove);
-    while (startAbove == (curr=geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
+    while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
     {
         th += inc;
 #ifdef DEBUG_GEOM
         cout << "th=" << th << "; ";
 #endif // DEBUG_GEOM
         testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
-        testLoc = viewerPos+testVec;
+        testLoc = viewerPos + testVec;
 #ifdef DEBUG_GEOM
         cout << "testLoc=(" << testLoc.x() << "," << testLoc.y() << "," << testLoc.z() << ") ==> " << geometries->getHeight(testLoc.x(), testLoc.y(), false) << endl;
-#endif // DEBUG_GEOM        
+#endif // DEBUG_GEOM
     }
     if (th <= -720.0f || th >= 720.f)
         // The simplistic shoreline search failed.  Revert to a default lookdir
@@ -183,14 +183,13 @@ void MainWidget::initializeGL()
 #ifdef DEBUG_GEOM
     cout << "Final lookDir = " << th << endl;
 #endif // DEBUG_GEOM
-    lookDir.setX(-Sin(th)*Cos(ph));
+    lookDir.setX(-Sin(th) * Cos(ph));
     lookDir.setY(Sin(ph));
-    lookDir.setZ(-Cos(th)*Cos(ph));
+    lookDir.setZ(-Cos(th) * Cos(ph));
 
     // Set our eye initial height based on the terrain
-    viewerPos.setY( geometries->getHeight(viewerPos.x(), viewerPos.z())+EYE_HEIGHT);
+    viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
 }
-
 
 void MainWidget::initShaders()
 {
@@ -199,17 +198,23 @@ void MainWidget::initShaders()
         close();
     if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vtexlight.glsl"))
         close();
+    if (!plantProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vplants.glsl"))
+        close();
 
     // Compile fragment shaders
     if (!skyProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexonly.glsl"))
         close();
     if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexlight.glsl"))
         close();
+    if (!plantProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fplants.glsl"))
+        close();
 
     // Link shader pipelines
     if (!skyProgram.link())
         close();
     if (!mainProgram.link())
+        close();
+    if (!plantProgram.link())
         close();
 }
 
@@ -241,13 +246,12 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    const qreal zNear = 3.0f/WORLD_DIM, zFar = 3.0f*WORLD_DIM, fov = 55.0;
+    const qreal zNear = 3.0f / WORLD_DIM, zFar = 3.0f * WORLD_DIM, fov = 55.0;
 
     // Set perspective projection
     projection.setToIdentity();
     projection.perspective(fov, aspect, zNear, zFar);
 }
-
 
 void MainWidget::paintGL()
 {
@@ -256,10 +260,10 @@ void MainWidget::paintGL()
 
     // Calculate model view transformation
     QMatrix4x4 matrix;
-    matrix.lookAt(viewerPos, viewerPos+lookDir, QVector3D(0,1,0));  // +Y is always up
+    matrix.lookAt(viewerPos, viewerPos + lookDir, QVector3D(0, 1, 0)); // +Y is always up
 
     // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
-    QVector3D lightPos( WORLD_DIM, WORLD_DIM/2.0f, -WORLD_DIM/2.0f);
+    QVector3D lightPos(-WORLD_DIM, WORLD_DIM / 2.0f, -WORLD_DIM / 2.0f);
 
     // Bind skybox shader pipeline for use
     if (!skyProgram.bind())
@@ -271,10 +275,9 @@ void MainWidget::paintGL()
     // Draw the skybox
     skyProgram.setUniformValue("texture", 0);
     skyTexture->bind();
-    geometries->drawSkyCubeGeometry(&skyProgram);
+    geometries->drawSkyCubeGeometry(&skyProgram); // Bind main shader pipeline for use
 
-
-    // Bind main shader pipeline for use
+    // Bind land & water shader pipeline for use
     if (!mainProgram.bind())
         close();
 
@@ -292,5 +295,19 @@ void MainWidget::paintGL()
     // Draw the water
     waterTexture->bind();
     geometries->drawWaterGeometry(&mainProgram);
-}
 
+    // Bind plant shader pipeline for use
+    if (!plantProgram.bind())
+        close();
+
+    // Set modelview-projection matrix
+    plantProgram.setUniformValue("mv_matrix", matrix);
+    plantProgram.setUniformValue("mvp_matrix", projection * matrix);
+    plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
+    plantProgram.setUniformValue("lightPosition", lightPos);
+
+    // Draw the trees
+    plantProgram.setUniformValue("texture", 0);
+    landTexture->bind();
+    geometries->drawSpruceGeometry(&plantProgram);
+}

@@ -37,6 +37,7 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
     initSkyCubeGeometry();
     initLandGeometry();
     initWaterGeometry();
+    initSpruceGeometry();
 }
 
 GeometryEngine::~GeometryEngine()
@@ -47,6 +48,67 @@ GeometryEngine::~GeometryEngine()
     landFacetsBuf.destroy();
     waterVertBuf.destroy();
     waterFacetsBuf.destroy();
+    for (int i = 0; i < spruceVertBuf.size(); i++)
+    {
+        // It is safe to assume the vertex and facet buffer arrays are the same size
+        spruceVertBuf[i].destroy();
+        spruceFacetsBuf[i].destroy();
+    }
+}
+
+void GeometryEngine::initSpruceGeometry()
+{
+    // The obj loader has vertices, texture coordinates, and normal coordinates in three separate arrays which are indexed independently,
+    // reflecting the format of an obj file.  For OpenGL VBO's, this has to be consolidated into packed vertex arrays.
+
+    // Since the obj format potentially has multiple object sections with different materials on each section, set an array of dynamic
+    // arrays.  Each vertex / index pair will represent a single "object section" such as trunk, branches
+    int numSections = spruce.data.section.size();
+
+    // TODO: If time allows, go back and convert the other initXxxGeometry members to use QVector dynamic arrays - these are AWESOME!!!
+    QVector<vertexData> vertex[numSections];
+    QVector<GLuint> index[numSections];
+
+    for (int i = 0; i < numSections; i++)
+    {
+        // TODO:  Materials properties
+        objectSection *s = &spruce.data.section[i];
+        // Iterate through the facets and build the packed vertex array to match it
+        for (int j = 0; j < s->f.size(); j++)
+        {
+            int i_v = s->f[j].v;   // Index into the obj vertex array
+            int i_vt = s->f[j].vt; // Index into the obj texture coordinate array
+            int i_vn = s->f[j].vn; // Index into the obj normal array
+
+            vertexData vd = {spruce.data.v[i_v - 1], spruce.data.vt[i_vt - 1], spruce.data.vn[i_vn - 1]};
+
+            // If VBO size becomes an issue, optimize by adding code to search if a vertex set is already in the array, and
+            // re-use if it is.
+
+            vertex[i] << vd;
+            index[i] << vertex[i].size();
+            if (s->f[j].edge)
+            {
+                index[i] << vertex[i].size(); // Signal start and end of polygons with doubled indices
+            }
+        }
+    }
+
+    // Now create the VBOs and transfer the data
+    spruceVertBuf.clear();
+    spruceFacetsBuf.clear();
+    for (int i = 0; i < numSections; i++)
+    {
+        spruceVertBuf << QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+        spruceVertBuf[i].create();
+        spruceVertBuf[i].bind();
+        spruceVertBuf[i].allocate(vertex[i].constData(), vertex[i].size() * sizeof(vertex[i][0]));
+
+        spruceFacetsBuf << QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+        spruceFacetsBuf[i].create();
+        spruceFacetsBuf[i].bind();
+        spruceFacetsBuf[i].allocate(index[i].constData(), index[i].size() * sizeof(index[i][0]));
+    }
 }
 
 void GeometryEngine::initLandGeometry()
@@ -233,6 +295,43 @@ void GeometryEngine::initSkyCubeGeometry()
 
     skyFacetsBuf.bind();
     skyFacetsBuf.allocate(indices, sizeof(indices));
+}
+
+void GeometryEngine::drawSpruceGeometry(QOpenGLShaderProgram *program)
+{
+    // Cycle through the VBOs aka "object sections"
+    for (int i = 0; i < spruceFacetsBuf.size(); i++)
+    {
+        spruceVertBuf[i].bind();
+        spruceFacetsBuf[i].bind();
+
+        // Running calculation of offsets
+        quintptr offset = 0;
+
+        //
+        // Connect shader plumbing
+        //
+
+        // vertex positions
+        int vertexLocation = program->attributeLocation("a_position");
+        program->enableAttributeArray(vertexLocation);
+        program->setAttributeBuffer(vertexLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
+        offset += sizeof(QVector3D);
+
+        // texture coordinates
+        int texcoordLocation = program->attributeLocation("a_texcoord");
+        program->enableAttributeArray(texcoordLocation);
+        program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(vertexData));
+        offset += sizeof(QVector2D);
+
+        // normals
+        int normalLocation = program->attributeLocation("a_normal");
+        program->enableAttributeArray(normalLocation);
+        program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
+
+        // Draw it
+        glDrawElements(GL_TRIANGLE_STRIP, spruceFacetsBuf[i].size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+    }
 }
 
 void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)

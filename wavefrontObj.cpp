@@ -64,9 +64,8 @@ bool wavefrontObj::loadObj(QString filename)
 
                 // Make sure there is a section available to add facets to
                 if (data.section.isEmpty())
-                    data.section << objectSection();
+                    data.section.resize(1);
 
-                // Double-stuff the first and last vertex triple for each facet to delineate discrete polys
                 int n = token.size() - 1;
                 for (int i = 1; i <= n; i++)
                 {
@@ -75,23 +74,13 @@ bool wavefrontObj::loadObj(QString filename)
                     {
                         // v//vn format will automagically be handled correctly because split() with KeepEmptyParts
                         // option will return empty string in position 1, and that empty string will parse to zero
-                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt());
+                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), i == 1 || i == n);
                         data.section.last().f << t;
-                        if (i == 1 || i == n)
-                        {
-                            // double-stuff to mark start and end of poly for VBO
-                            data.section.last().f << t;
-                        }
                     }
                     else if (indices.size() == 1)
                     {
-                        indexTriple t(indices[0].toUInt(), 0, 0);
+                        indexTriple t(indices[0].toUInt(), 0, 0, i == 1 || i == n);
                         data.section.last().f << t;
-                        if (i == 1 || i == n)
-                        {
-                            // double-stuff to mark start and end of poly for VBO
-                            data.section.last().f << t;
-                        }
                     }
                     else
                     {
@@ -266,7 +255,7 @@ bool wavefrontObj::loadMaterialFile(QString filename)
     return true;
 }
 
-// A better way would be to subclass the QVector classes and provide toStr() methods, but this is more expedient 
+// A better way would be to subclass the QVector classes and provide toStr() methods, but this is more expedient
 // in the short term...
 #define V2(X) "(" << (X).x() << "," << (X).y() << ")"
 #define V3(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << ")"
@@ -277,7 +266,7 @@ void wavefrontObj::debugDump(void)
     cout << "wavefrontObj::debugDump()..." << endl;
 
     cout << "Name = '" << data.name.toStdString() << "'" << endl;
-    
+
     cout << data.v.size() << " vertices:" << endl;
     for (int i = 0; i < data.v.size(); i++)
         cout << "  " << V3(data.v[i]) << endl;
@@ -294,19 +283,22 @@ void wavefrontObj::debugDump(void)
 
     for (int i = 0; i < data.section.size(); i++)
     {
-        cout << "  Dump section " << i+1 << "..." << endl;
+        cout << "  Dump section " << i + 1 << "..." << endl;
         objectSection *s = &data.section[i];
         cout << "    Material '" << s->mtl.name.toStdString() << "'" << endl;
         cout << "                  Ns = " << s->mtl.Ns << endl;
         cout << "                  Ka = " << V4(s->mtl.Ka) << endl;
         cout << "                  Kd = " << V4(s->mtl.Kd) << endl;
         cout << "                  Ks = " << V4(s->mtl.Ks) << endl;
-        cout << "                   d = " <<s->mtl. d << endl;
+        cout << "                   d = " << s->mtl.d << endl;
         cout << "      map_d_filename = '" << s->mtl.map_d_filename.toStdString() << "'" << endl;
         cout << "    " << s->f.size() << " facets:" << endl;
         for (int j = 0; j < s->f.size(); j++)
         {
-            cout << "      v=" << s->f[j].v << "  vt=" << s->f[j].vt << "  vn=" << s->f[j].vn << endl;
+            cout << "      v=" << s->f[j].v << "  vt=" << s->f[j].vt << "  vn=" << s->f[j].vn;
+            if (s->f[j].edge)
+                cout << " EDGE";
+            cout << endl;
         }
     }
 

@@ -30,6 +30,13 @@
 #define Frand(RANGE)    (float(rand()) * float(RANGE) / float(RAND_MAX))
 #define MAX(X,Y)        ((X)>(Y) ? (X) : (Y))
 
+#ifdef DEBUG_GEOM
+#define V2(X) "(" << (X).x() << "," << (X).y() << ")"
+#define V3(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << ")"
+#define V4(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w() << ")"
+#endif // DEBUG_GEOM
+
+// Packed structures to use for the OpenGL VBOs
 struct unlitVertexData
 {
     QVector3D position;
@@ -52,6 +59,7 @@ public:
     void drawSkyCubeGeometry(QOpenGLShaderProgram *program);
     void drawLandGeometry(QOpenGLShaderProgram *program);
     void drawWaterGeometry(QOpenGLShaderProgram *program);
+    void drawSpruceGeometry(QOpenGLShaderProgram *program);
     float getHeight(float x, float z, bool stayAbove = true);
     bool adjustViewerPos(QVector3D & viewerPos, QVector2D searchDir);
     float getWaterLevel(void) { return waterLevel; }
@@ -61,6 +69,7 @@ private:
     void initSkyCubeGeometry();
     void initLandGeometry();
     void initWaterGeometry();
+    void initSpruceGeometry();
 
     void diamondSquare(int size, bool presetCenter = false);
     void squareStep(int x, int z, int reach);
@@ -75,6 +84,8 @@ private:
     QOpenGLBuffer landFacetsBuf;
     QOpenGLBuffer waterVertBuf;
     QOpenGLBuffer waterFacetsBuf;
+    QVector<QOpenGLBuffer> spruceVertBuf;
+    QVector<QOpenGLBuffer> spruceFacetsBuf;
 
     float landAvg, waterLevel;
     wavefrontObj spruce;
