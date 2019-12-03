@@ -1,6 +1,6 @@
 QT       += core gui widgets
 
-TARGET = meadow
+TARGET = final
 TEMPLATE = app
 
 SOURCES += main.cpp
