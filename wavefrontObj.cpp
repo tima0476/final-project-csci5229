@@ -32,9 +32,7 @@ bool wavefrontObj::loadObj(QString filename)
         while (in.readLineInto(&line))
         {
             if (line.isEmpty())
-            {
                 continue; // skip blank lines else token[0] will segfault
-            }
             QStringList token = line.split(' ', QString::SkipEmptyParts);
             QString cmd = token[0]; // The first token on a line is the command
             if (cmd == "o")
@@ -74,7 +72,8 @@ bool wavefrontObj::loadObj(QString filename)
                     {
                         // v//vn format will automagically be handled correctly because split() with KeepEmptyParts
                         // option will return empty string in position 1, and that empty string will parse to zero
-                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), i == 1 || i == n);
+                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), false);
+                        // indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), i == 1 || i == n);
                         data.section.last().f << t;
                     }
                     else if (indices.size() == 1)
@@ -93,6 +92,9 @@ bool wavefrontObj::loadObj(QString filename)
             {
                 // Switch the material.
                 setMaterial(token[1]);
+                // if (!data.section.isEmpty())
+                //     if (!data.section.last().f.isEmpty())
+                //         data.section.last().f.last().edge = true;
             }
             else if (cmd == "mtllib")
             {
@@ -257,9 +259,9 @@ bool wavefrontObj::loadMaterialFile(QString filename)
 
 // A better way would be to subclass the QVector classes and provide toStr() methods, but this is more expedient
 // in the short term...
-#define V2(X) "(" << (X).x() << "," << (X).y() << ")"
-#define V3(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << ")"
-#define V4(X) "(" << (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w() << ")"
+#define V2(X) (X).x() << "," << (X).y()
+#define V3(X) (X).x() << "," << (X).y() << "," << (X).z()
+#define V4(X) (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w()
 
 void wavefrontObj::debugDump(void)
 {
@@ -283,6 +285,7 @@ void wavefrontObj::debugDump(void)
 
     for (int i = 0; i < data.section.size(); i++)
     {
+        bool lBreak = false;
         cout << "  Dump section " << i + 1 << "..." << endl;
         objectSection *s = &data.section[i];
         cout << "    Material '" << s->mtl.name.toStdString() << "'" << endl;
@@ -295,10 +298,13 @@ void wavefrontObj::debugDump(void)
         cout << "    " << s->f.size() << " facets:" << endl;
         for (int j = 0; j < s->f.size(); j++)
         {
-            cout << "      v=" << s->f[j].v << "  vt=" << s->f[j].vt << "  vn=" << s->f[j].vn;
+            cout << " " << s->f[j].v << "/" << s->f[j].vt << "/" << s->f[j].vn;
             if (s->f[j].edge)
-                cout << " EDGE";
-            cout << endl;
+            {
+                if (lBreak)
+                    cout << endl;
+                lBreak = !lBreak;
+            }
         }
     }
 

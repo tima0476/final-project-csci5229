@@ -13,7 +13,7 @@
 #include <QOpenGLBuffer>
 #include "wavefrontObj.h"
 
-#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square"
+#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square" \
                               // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
 #define LAND_TEX_REPS 40      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM 40.0f       // Half the width & depth & height of the world
@@ -26,7 +26,7 @@
 #define TREE_RANGE_L 0.2f     // The maximum size range of the trees (multiplier)
 #define TREE_RANGE_H 1.0f     // The maximum size range of the trees (multiplier)
 #define TREE_SINK 0.1f        // how far underground trees extend
-#define TREE_MIN_PROX 0.1f    // minimum distance between trees
+#define TREE_MIN_PROX 0.25f   // minimum distance between trees
 
 // Convenience macros to improve readability
 #define Coord_2on1(X, Z) ((Z)*LAND_DIVS + (X))
@@ -57,7 +57,7 @@ public:
     void drawSkyCubeGeometry(QOpenGLShaderProgram *program);
     void drawLandGeometry(QOpenGLShaderProgram *program);
     void drawWaterGeometry(QOpenGLShaderProgram *program);
-    void drawSpruceGeometry(QOpenGLShaderProgram *program);
+    void drawTreeGeometry(QOpenGLShaderProgram *program);
     float getHeight(float x, float z, bool stayAbove = true);
     bool adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir);
     float getWaterLevel(void) { return waterLevel; }
@@ -69,7 +69,7 @@ private:
     void initSkyCubeGeometry();
     void initLandGeometry();
     void initWaterGeometry();
-    void initSpruceGeometry();
+    void initTreeGeometry();
 
     void diamondSquare(int size, bool presetCenter = false);
     void squareStep(int x, int z, int reach);
@@ -84,12 +84,12 @@ private:
     QOpenGLBuffer landFacetsBuf;
     QOpenGLBuffer waterVertBuf;
     QOpenGLBuffer waterFacetsBuf;
-    QVector<QOpenGLBuffer> spruceVertBuf;
-    QVector<QOpenGLBuffer> spruceFacetsBuf;
-    QVector<QOpenGLTexture *> spruceTexture;
+    QVector<QOpenGLBuffer> treeVertBuf;
+    QVector<QOpenGLBuffer> treeFacetsBuf;
+    QVector<QOpenGLTexture *> treeTexture;
 
     float landAvg, waterLevel;
-    wavefrontObj spruce;
+    wavefrontObj tree;
     float closestTree(float x, float z);
 };
 

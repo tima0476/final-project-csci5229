@@ -18,7 +18,8 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterFacetsBuf(QOpenGLBuffer::IndexBuffer),
                                    waterLevel(-WORLD_DIM),
-                                   spruce("Spruce.obj")
+                                //    tree("Spruce.obj")
+                                   tree("Tree.obj")
 {
     initializeOpenGLFunctions();
 
@@ -34,51 +35,51 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
     initSkyCubeGeometry();
     initLandGeometry();
     initWaterGeometry();
-    initSpruceGeometry();
+    initTreeGeometry();
     placeTrees();
 }
 
 GeometryEngine::~GeometryEngine()
 {
-    for (int i = 0; i < spruce.data.section.size(); i++)
-        delete spruceTexture[i];
+    for (int i = 0; i < tree.data.section.size(); i++)
+        delete treeTexture[i];
     skyVertBuf.destroy();
     skyFacetsBuf.destroy();
     landVertBuf.destroy();
     landFacetsBuf.destroy();
     waterVertBuf.destroy();
     waterFacetsBuf.destroy();
-    for (int i = 0; i < spruceVertBuf.size(); i++)
+    for (int i = 0; i < treeVertBuf.size(); i++)
     {
         // It is safe to assume the vertex and facet buffer arrays are the same size
-        spruceVertBuf[i].destroy();
-        spruceFacetsBuf[i].destroy();
+        treeVertBuf[i].destroy();
+        treeFacetsBuf[i].destroy();
     }
 }
 
-void GeometryEngine::initSpruceGeometry()
+void GeometryEngine::initTreeGeometry()
 {
     // The obj loader has vertices, texture coordinates, and normal coordinates in three separate arrays which are indexed independently,
     // reflecting the format of an obj file.  For OpenGL VBO's, this has to be consolidated into packed vertex arrays.
 
     // Since the obj format potentially has multiple object sections with different materials on each section, set an array of dynamic
     // arrays.  Each vertex / index pair will represent a single "object section" such as trunk, branches
-    int numSections = spruce.data.section.size();
+    int numSections = tree.data.section.size();
 
     QVector<vertexData> vertex[numSections];
     QVector<GLuint> index[numSections];
 
     for (int i = 0; i < numSections; i++)
     {
-        objectSection *s = &spruce.data.section[i];
+        objectSection *s = &tree.data.section[i];
         // Materials properties
         materialData *mtl = &(s->mtl);
 
         // Set up the texture for this section
-        spruceTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
-        spruceTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
-        spruceTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
-        spruceTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
+        treeTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
+        treeTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
+        treeTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
+        treeTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
 
         // Iterate through the facets and build the packed vertex array to match it
         for (int j = 0; j < s->f.size(); j++)
@@ -87,7 +88,7 @@ void GeometryEngine::initSpruceGeometry()
             int i_vt = s->f[j].vt; // Index into the obj texture coordinate array
             int i_vn = s->f[j].vn; // Index into the obj normal array
 
-            vertexData vd = {spruce.data.v[i_v - 1], spruce.data.vt[i_vt - 1], spruce.data.vn[i_vn - 1]};
+            vertexData vd = {tree.data.v[i_v - 1], tree.data.vt[i_vt - 1], tree.data.vn[i_vn - 1]};
 
             // If VBO size becomes an issue, optimize by adding code to search if a vertex set is already in the array, and
             // re-use if it is.
@@ -102,19 +103,19 @@ void GeometryEngine::initSpruceGeometry()
     }
 
     // Now create the VBOs and transfer the data
-    spruceVertBuf.clear();
-    spruceFacetsBuf.clear();
+    treeVertBuf.clear();
+    treeFacetsBuf.clear();
     for (int i = 0; i < numSections; i++)
     {
-        spruceVertBuf << QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
-        spruceVertBuf[i].create();
-        spruceVertBuf[i].bind();
-        spruceVertBuf[i].allocate(vertex[i].constData(), vertex[i].size() * sizeof(vertex[i][0]));
+        treeVertBuf << QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+        treeVertBuf[i].create();
+        treeVertBuf[i].bind();
+        treeVertBuf[i].allocate(vertex[i].constData(), vertex[i].size() * sizeof(vertex[i][0]));
 
-        spruceFacetsBuf << QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-        spruceFacetsBuf[i].create();
-        spruceFacetsBuf[i].bind();
-        spruceFacetsBuf[i].allocate(index[i].constData(), index[i].size() * sizeof(index[i][0]));
+        treeFacetsBuf << QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+        treeFacetsBuf[i].create();
+        treeFacetsBuf[i].bind();
+        treeFacetsBuf[i].allocate(index[i].constData(), index[i].size() * sizeof(index[i][0]));
     }
 }
 
@@ -304,16 +305,16 @@ void GeometryEngine::initSkyCubeGeometry()
     skyFacetsBuf.allocate(indices, sizeof(indices));
 }
 
-void GeometryEngine::drawSpruceGeometry(QOpenGLShaderProgram *program)
+void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
 {
     // Cycle through the VBOs aka "object sections"
-    for (int i = 0; i < spruceFacetsBuf.size(); i++)
+    for (int i = 0; i < treeFacetsBuf.size(); i++)
     {
         program->setUniformValue("texture", 0);
-        spruceTexture[i]->bind();
+        treeTexture[i]->bind();
 
-        spruceVertBuf[i].bind();
-        spruceFacetsBuf[i].bind();
+        treeVertBuf[i].bind();
+        treeFacetsBuf[i].bind();
 
         // Running calculation of offsets
         quintptr offset = 0;
@@ -340,7 +341,7 @@ void GeometryEngine::drawSpruceGeometry(QOpenGLShaderProgram *program)
         program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
         // Draw it
-        glDrawElements(GL_TRIANGLE_STRIP, spruceFacetsBuf[i].size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLE_STRIP, treeFacetsBuf[i].size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
     }
 }
 
