@@ -21,8 +21,7 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterFacetsBuf(QOpenGLBuffer::IndexBuffer),
                                    waterLevel(-WORLD_DIM),
-                                    //   tree("Spruce.obj")
-                                   tree("Tree.obj")
+                                   tree("Spruce.obj")
 {
     initializeOpenGLFunctions();
 
@@ -86,7 +85,7 @@ void GeometryEngine::initTreeGeometry()
         // Set up the texture for this section
         treeTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
         treeTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
-        treeTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
+        treeTexture.last()->setMagnificationFilter(QOpenGLTexture::NearestMipMapLinear);
         treeTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
 
         // Iterate through the facets and build the packed vertex array to match it

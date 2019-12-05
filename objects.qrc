@@ -1,11 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>obj/Leaves.png</file>
-        <file>obj/Tree.mtl</file>
-        <file>obj/Tree.obj</file>
-        <file>obj/Trunk.jpeg</file>
-        <file>obj/Spruce-branches.png</file>
-        <file>obj/Spruce-trunk.jpeg</file>
+        <file>obj/Spruce branches.png</file>
+        <file>obj/Spruce trunk.jpeg</file>
         <file>obj/Spruce.mtl</file>
         <file>obj/Spruce.obj</file>
     </qresource>

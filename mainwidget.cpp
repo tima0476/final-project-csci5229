@@ -291,7 +291,6 @@ void MainWidget::paintGL()
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
         treePos.rotate(-90, 1, 0, 0); // Compensate for tree obj oriented on different axis
-        // treePos.rotate(90, 1, 0, 0); // Compensate for tree obj oriented on different axis
 
         plantProgram.setUniformValue("mv_matrix", treePos);
         plantProgram.setUniformValue("mvp_matrix", projection * treePos);
