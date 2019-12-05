@@ -72,13 +72,12 @@ bool wavefrontObj::loadObj(QString filename)
                     {
                         // v//vn format will automagically be handled correctly because split() with KeepEmptyParts
                         // option will return empty string in position 1, and that empty string will parse to zero
-                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), false);
-                        // indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), i == 1 || i == n);
+                        indexTriple t(indices[0].toUInt(), indices[1].toUInt(), indices[2].toUInt(), i == n);
                         data.section.last().f << t;
                     }
                     else if (indices.size() == 1)
                     {
-                        indexTriple t(indices[0].toUInt(), 0, 0, i == 1 || i == n);
+                        indexTriple t(indices[0].toUInt(), 0, 0, i == n);
                         data.section.last().f << t;
                     }
                     else
@@ -92,9 +91,6 @@ bool wavefrontObj::loadObj(QString filename)
             {
                 // Switch the material.
                 setMaterial(token[1]);
-                // if (!data.section.isEmpty())
-                //     if (!data.section.last().f.isEmpty())
-                //         data.section.last().f.last().edge = true;
             }
             else if (cmd == "mtllib")
             {

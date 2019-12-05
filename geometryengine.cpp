@@ -11,6 +11,9 @@
 #include <float.h> // for FLT_MAX
 #include <math.h>  // for sqrt()
 
+#include <iostream>
+using namespace std;
+
 GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
                                    skyFacetsBuf(QOpenGLBuffer::IndexBuffer),
                                    landVertBuf(QOpenGLBuffer::VertexBuffer),
@@ -18,7 +21,7 @@ GeometryEngine::GeometryEngine() : skyVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterVertBuf(QOpenGLBuffer::VertexBuffer),
                                    waterFacetsBuf(QOpenGLBuffer::IndexBuffer),
                                    waterLevel(-WORLD_DIM),
-                                //    tree("Spruce.obj")
+                                    //   tree("Spruce.obj")
                                    tree("Tree.obj")
 {
     initializeOpenGLFunctions();
@@ -56,6 +59,9 @@ GeometryEngine::~GeometryEngine()
         treeFacetsBuf[i].destroy();
     }
 }
+// #define V2(X) (X).x() << "," << (X).y()
+// #define V3(X) (X).x() << "," << (X).y() << "," << (X).z()
+// #define V4(X) (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w()
 
 void GeometryEngine::initTreeGeometry()
 {
@@ -67,7 +73,9 @@ void GeometryEngine::initTreeGeometry()
     int numSections = tree.data.section.size();
 
     QVector<vertexData> vertex[numSections];
-    QVector<GLuint> index[numSections];
+    QVector<GLushort> index[numSections];
+
+    facetChunk.clear();
 
     for (int i = 0; i < numSections; i++)
     {
@@ -82,11 +90,15 @@ void GeometryEngine::initTreeGeometry()
         treeTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
 
         // Iterate through the facets and build the packed vertex array to match it
+        facetChunkData fc = {0, 0};
+        facetChunk << QVector<facetChunkData>();
+
         for (int j = 0; j < s->f.size(); j++)
         {
-            int i_v = s->f[j].v;   // Index into the obj vertex array
-            int i_vt = s->f[j].vt; // Index into the obj texture coordinate array
-            int i_vn = s->f[j].vn; // Index into the obj normal array
+            int i_v = s->f[j].v;      // Index into the obj vertex array
+            int i_vt = s->f[j].vt;    // Index into the obj texture coordinate array
+            int i_vn = s->f[j].vn;    // Index into the obj normal array
+            bool edge = s->f[j].edge; // true if this is the last vertex in a facet
 
             vertexData vd = {tree.data.v[i_v - 1], tree.data.vt[i_vt - 1], tree.data.vn[i_vn - 1]};
 
@@ -94,12 +106,32 @@ void GeometryEngine::initTreeGeometry()
             // re-use if it is.
 
             vertex[i] << vd;
-            index[i] << vertex[i].size();
-            if (s->f[j].edge)
+            index[i] << vertex[i].size() - 1;
+            fc.count++;
+            if (edge)
             {
-                index[i] << vertex[i].size(); // Signal start and end of polygons with doubled indices
+                // repeat the first index of the chunk to close the poly
+                vertex[i] << vertex[i][fc.base];
+                index[i] << vertex[i].size() - 1;
+                fc.count++;
+
+                // end of a chunk.  Add it to the list.
+                facetChunk.last() << fc;
+
+                // start the next chunk
+                fc.base = vertex[i].size();
+                fc.count = 0;
             }
         }
+
+        // for (int j = 0; j < facetChunk.size(); j++)
+        // {
+        //     cout << "Facet set " << j << endl;
+        //     for (int k = 0; k < facetChunk[j].size(); k++)
+        //     {
+        //         cout << "  " << k << ": base=" << facetChunk[j][k].base << "   count=" << facetChunk[j][k].count << endl;
+        //     }
+        // }
     }
 
     // Now create the VBOs and transfer the data
@@ -307,7 +339,7 @@ void GeometryEngine::initSkyCubeGeometry()
 
 void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
 {
-    // Cycle through the VBOs aka "object sections"
+    // Cycle through the "object sections"
     for (int i = 0; i < treeFacetsBuf.size(); i++)
     {
         program->setUniformValue("texture", 0);
@@ -340,8 +372,12 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         program->enableAttributeArray(normalLocation);
         program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
-        // Draw it
-        glDrawElements(GL_TRIANGLE_STRIP, treeFacetsBuf[i].size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+        // Draw it (aka spew our chunks)
+        for (int j = 0; j < facetChunk[i].size(); j++)
+        {
+            glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, facetChunk[i][j].count, GL_UNSIGNED_SHORT, NULL, facetChunk[i][j].base);
+            // cout << "  " << i << "," << j << ": base=" << facetChunk[i][j].base << "   count=" << facetChunk[i][j].count << endl;
+        }
     }
 }
 
@@ -367,7 +403,7 @@ void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(texcoordLocation);
     program->setAttributeBuffer(texcoordLocation, GL_FLOAT, offset, 2, sizeof(unlitVertexData));
 
-    glDrawElements(GL_TRIANGLE_STRIP, skyFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, skyFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, NULL);
 }
 
 void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
@@ -401,7 +437,7 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
     // Now the plumbing is hooked up, draw what's in the buffer!
-    glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, 0);
+    glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, NULL);
 }
 
 void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)

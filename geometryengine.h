@@ -22,10 +22,10 @@
 #define WATER_LEVEL -1.5f     // elevation of water surface as offset from avg
 #define WATER_TEX_REPS 35.0f  // number of times to repeat the water texture
 #define WATER_START_PROX 2.0f // Starting distance from the edge of the water
-#define TREE_COUNT 1000       // The number of trees in this world
+#define TREE_COUNT 500       // The number of trees in this world
 #define TREE_RANGE_L 0.2f     // The maximum size range of the trees (multiplier)
 #define TREE_RANGE_H 1.0f     // The maximum size range of the trees (multiplier)
-#define TREE_SINK 0.1f        // how far underground trees extend
+#define TREE_SINK 0.0f        // how far underground trees extend
 #define TREE_MIN_PROX 0.25f   // minimum distance between trees
 
 // Convenience macros to improve readability
@@ -46,6 +46,11 @@ struct vertexData
     QVector3D position;
     QVector2D texCoord;
     QVector3D normal;
+};
+
+struct facetChunkData
+{
+    GLushort base, count;
 };
 
 class GeometryEngine : protected QOpenGLFunctions
@@ -87,6 +92,7 @@ private:
     QVector<QOpenGLBuffer> treeVertBuf;
     QVector<QOpenGLBuffer> treeFacetsBuf;
     QVector<QOpenGLTexture *> treeTexture;
+    QVector<QVector<facetChunkData>> facetChunk;
 
     float landAvg, waterLevel;
     wavefrontObj tree;
