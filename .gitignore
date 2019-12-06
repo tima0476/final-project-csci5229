@@ -29,7 +29,7 @@
 *.exe
 *.out
 *.app
-meadow
+final
 
 # qmake outputs
 .qmake.stash
@@ -40,3 +40,4 @@ qrc*.cpp
 # Mac
 .DS_Store
 qrc_objects.cpp
+

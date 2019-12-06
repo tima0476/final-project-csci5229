@@ -11,6 +11,8 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
+#include <QOpenGLExtraFunctions>
+
 #include "wavefrontObj.h"
 
 #define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The Diamond Square terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
@@ -52,7 +54,8 @@ struct facetChunkData
     GLushort base, count;
 };
 
-class GeometryEngine : protected QOpenGLFunctions
+// class GeometryEngine : protected QOpenGLFunctions, protected QOpenGLExtraFunctions
+class GeometryEngine : protected QOpenGLExtraFunctions
 {
 public:
     GeometryEngine();
