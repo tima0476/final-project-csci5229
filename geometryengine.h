@@ -54,7 +54,6 @@ struct facetChunkData
     GLushort base, count;
 };
 
-// class GeometryEngine : protected QOpenGLFunctions, protected QOpenGLExtraFunctions
 class GeometryEngine : protected QOpenGLExtraFunctions
 {
 public:
