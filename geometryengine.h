@@ -79,8 +79,7 @@ private:
     void squareStep(int x, int z, int reach);
     void diamondStep(int x, int z, int reach);
 
-    vertexData landVerts[LAND_DIVS * LAND_DIVS]; // Make this array a class member so we don't have to
-                                                 // pass it around on the stack
+    vertexData landVerts[LAND_DIVS * LAND_DIVS]; // Make this array a class member so we don't have to pass it around on the stack
 
     QOpenGLBuffer skyVertBuf;
     QOpenGLBuffer skyFacetsBuf;
