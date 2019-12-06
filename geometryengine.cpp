@@ -640,7 +640,6 @@ void GeometryEngine::placeTrees(void)
             y = getHeight(x, z, false);
         } while (y < waterLevel || closestTree(x, z) < TREE_MIN_PROX);
 
-        // intentionally allowing possibility of some trees slightly underwater
         treeSpot[i] = QVector4D(x, y - TREE_SINK, z, TREE_RANGE_L + Frand(TREE_RANGE_H - TREE_RANGE_L));
     }
 }

@@ -1,8 +1,8 @@
 <RCC>
     <qresource prefix="/">
+        <file>obj/Spruce.obj</file>
         <file>obj/Spruce branches.png</file>
         <file>obj/Spruce trunk.jpeg</file>
         <file>obj/Spruce.mtl</file>
-        <file>obj/Spruce.obj</file>
     </qresource>
 </RCC>

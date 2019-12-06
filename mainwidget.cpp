@@ -127,9 +127,6 @@ void MainWidget::initializeGL()
     // Enable depth buffer
     glEnable(GL_DEPTH_TEST);
 
-    // Enable back face culling
-    // glEnable(GL_CULL_FACE);
-
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
