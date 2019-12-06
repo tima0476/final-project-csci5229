@@ -13,8 +13,7 @@
 #include <QOpenGLBuffer>
 #include "wavefrontObj.h"
 
-#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The "Diamond Square" \
-                              // terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
+#define LAND_DIVS 513         // The number of divisions in each cardinal direction for the land grid.  The Diamond Square terrain generation algorithm requires this to be 2^n+1 where n is a positive integer
 #define LAND_TEX_REPS 40      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM 40.0f       // Half the width & depth & height of the world
 #define TERRAIN_RANGE 3.0f    // The maximum height range of the terrain
@@ -24,7 +23,7 @@
 #define WATER_START_PROX 2.0f // Starting distance from the edge of the water
 #define TREE_COUNT 500        // The number of trees in this world
 #define TREE_RANGE_L 0.2f     // The maximum size range of the trees (multiplier)
-#define TREE_RANGE_H 0.75f   // The maximum size range of the trees (multiplier)
+#define TREE_RANGE_H 0.75f    // The maximum size range of the trees (multiplier)
 #define TREE_SINK 0.0f        // how far underground trees extend
 #define TREE_MIN_PROX 0.25f   // minimum distance between trees
 
