@@ -122,15 +122,6 @@ void GeometryEngine::initTreeGeometry()
                 fc.count = 0;
             }
         }
-
-        // for (int j = 0; j < facetChunk.size(); j++)
-        // {
-        //     cout << "Facet set " << j << endl;
-        //     for (int k = 0; k < facetChunk[j].size(); k++)
-        //     {
-        //         cout << "  " << k << ": base=" << facetChunk[j][k].base << "   count=" << facetChunk[j][k].count << endl;
-        //     }
-        // }
     }
 
     // Now create the VBOs and transfer the data
@@ -371,6 +362,7 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         program->enableAttributeArray(normalLocation);
         program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
+        // Here is the spot to pass material data into the shader
         // Draw it (aka spew our chunks)
         for (int j = 0; j < facetChunk[i].size(); j++)
         {
