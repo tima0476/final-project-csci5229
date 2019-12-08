@@ -16,7 +16,7 @@
 
 int main(int argc, char *argv[])
 {
-    srand(time(NULL));
+    // srand(time(NULL));
     QApplication app(argc, argv);
 
     QSurfaceFormat format;
@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion("0.1");
 #ifndef QT_NO_OPENGL
     MainWidget widget;
+    widget.resize(widget.sizeHint());
     widget.show();
 #else
     QLabel note("OpenGL Support required");
