@@ -58,9 +58,6 @@ GeometryEngine::~GeometryEngine()
         treeFacetsBuf[i].destroy();
     }
 }
-// #define V2(X) (X).x() << "," << (X).y()
-// #define V3(X) (X).x() << "," << (X).y() << "," << (X).z()
-// #define V4(X) (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w()
 
 void GeometryEngine::initTreeGeometry()
 {
@@ -344,7 +341,6 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         //
         // Connect shader plumbing
         //
-
         // vertex positions
         int vertexLocation = program->attributeLocation("a_position");
         program->enableAttributeArray(vertexLocation);
@@ -362,13 +358,16 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         program->enableAttributeArray(normalLocation);
         program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
-        // Here is the spot to pass material data into the shader
+        // Pass material properties into the shader
+        program->setUniformValue("MatAmbient", tree.data.section[i].mtl.Ka.toVector3D());
+        program->setUniformValue("MatDiffuse", tree.data.section[i].mtl.Kd.toVector3D());
+        program->setUniformValue("MatSpecular", tree.data.section[i].mtl.Ks.toVector3D());
+        program->setUniformValue("MatShininess", tree.data.section[i].mtl.Ns);
+
+
         // Draw it (aka spew our chunks)
         for (int j = 0; j < facetChunk[i].size(); j++)
-        {
             glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, facetChunk[i][j].count, GL_UNSIGNED_SHORT, NULL, facetChunk[i][j].base);
-            // cout << "  " << i << "," << j << ": base=" << facetChunk[i][j].base << "   count=" << facetChunk[i][j].count << endl;
-        }
     }
 }
 

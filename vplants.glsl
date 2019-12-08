@@ -24,16 +24,10 @@ varying vec3 Normal;
 
 void main()
 {
-    //  Vertex location in modelview coordinates
     vec4 P = mv_matrix * a_position;
-    //  Light position
     Light  = lightPosition.xyz - P.xyz;
-    //  Normal
     Normal = normalMatrix * a_normal;
-    //  Eye position
     View  = -P.xyz;
-    //  Texture
     v_texcoord = a_texcoord;
-    //  Set vertex position
     gl_Position = mvp_matrix * a_position;
 }

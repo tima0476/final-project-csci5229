@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     app.setApplicationName("meadow - Timothy Mason");
-    app.setApplicationVersion("0.1");
+    app.setApplicationVersion("1.0");
 #ifndef QT_NO_OPENGL
     MainWidget widget;
     widget.resize(widget.sizeHint());

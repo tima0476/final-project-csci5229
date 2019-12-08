@@ -287,7 +287,6 @@ void MainWidget::paintGL()
     if (!plantProgram.bind())
         close();
 
-    plantProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
     plantProgram.setUniformValue("lightPosition", lightPos);
 
     // Draw all of the trees
@@ -297,7 +296,8 @@ void MainWidget::paintGL()
         treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
-        treePos.rotate(-90, 1, 0, 0); // Compensate for tree obj oriented on different axis
+
+        plantProgram.setUniformValue("normalMatrix", treePos.normalMatrix());
 
         plantProgram.setUniformValue("mv_matrix", treePos);
         plantProgram.setUniformValue("mvp_matrix", projection * treePos);
