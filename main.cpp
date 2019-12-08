@@ -8,6 +8,7 @@
 #include <QApplication>
 #include <QLabel>
 #include <QSurfaceFormat>
+#include <time.h>       // For seeding rand()
 
 #ifndef QT_NO_OPENGL
 #include "mainwidget.h"
@@ -15,6 +16,7 @@
 
 int main(int argc, char *argv[])
 {
+    srand(time(NULL));
     QApplication app(argc, argv);
 
     QSurfaceFormat format;
