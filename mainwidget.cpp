@@ -181,25 +181,19 @@ void MainWidget::initShaders()
     // Compile vertex shaders
     if (!skyProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vtexonly.glsl"))
         close();
-    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vtexlight.glsl"))
-        close();
-    if (!plantProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vplants.glsl"))
+    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/vmain.glsl"))
         close();
 
     // Compile fragment shaders
     if (!skyProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexonly.glsl"))
         close();
-    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/ftexlight.glsl"))
-        close();
-    if (!plantProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fplants.glsl"))
+    if (!mainProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/fmain.glsl"))
         close();
 
     // Link shader pipelines
     if (!skyProgram.link())
         close();
     if (!mainProgram.link())
-        close();
-    if (!plantProgram.link())
         close();
 }
 
@@ -283,12 +277,6 @@ void MainWidget::paintGL()
     waterTexture->bind();
     geometries->drawWaterGeometry(&mainProgram);
 
-    // Bind plant shader pipeline
-    if (!plantProgram.bind())
-        close();
-
-    plantProgram.setUniformValue("lightPosition", lightPos);
-
     // Draw all of the trees
     for (int i = 0; i < TREE_COUNT; i++)
     {
@@ -297,12 +285,12 @@ void MainWidget::paintGL()
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
 
-        plantProgram.setUniformValue("normalMatrix", treePos.normalMatrix());
+        mainProgram.setUniformValue("normalMatrix", treePos.normalMatrix());
 
-        plantProgram.setUniformValue("mv_matrix", treePos);
-        plantProgram.setUniformValue("mvp_matrix", projection * treePos);
+        mainProgram.setUniformValue("mv_matrix", treePos);
+        mainProgram.setUniformValue("mvp_matrix", projection * treePos);
 
         // Draw a tree
-        geometries->drawTreeGeometry(&plantProgram);
+        geometries->drawTreeGeometry(&mainProgram);
     }
 }

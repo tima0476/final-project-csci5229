@@ -2,9 +2,7 @@
     <qresource prefix="/">
         <file>vtexonly.glsl</file>
         <file>ftexonly.glsl</file>
-        <file>vtexlight.glsl</file>
-        <file>ftexlight.glsl</file>
-        <file>vplants.glsl</file>
-        <file>fplants.glsl</file>
+        <file>vmain.glsl</file>
+        <file>fmain.glsl</file>
     </qresource>
 </RCC>

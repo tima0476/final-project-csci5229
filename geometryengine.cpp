@@ -140,6 +140,7 @@ void GeometryEngine::initTreeGeometry()
 
 void GeometryEngine::initLandGeometry()
 {
+    // Build an array of vertices, texture coords, and normals in local memory
     for (int zi = 0; zi < LAND_DIVS; zi++)
     {
         float zfrac = zi / float(LAND_DIVS - 1);
@@ -364,8 +365,7 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         program->setUniformValue("MatSpecular", tree.data.section[i].mtl.Ks.toVector3D());
         program->setUniformValue("MatShininess", tree.data.section[i].mtl.Ns);
 
-
-        // Draw it (aka spew our chunks)
+        // Draw it (i.e., spew our chunks)
         for (int j = 0; j < facetChunk[i].size(); j++)
             glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, facetChunk[i][j].count, GL_UNSIGNED_SHORT, NULL, facetChunk[i][j].base);
     }
@@ -426,6 +426,12 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     program->enableAttributeArray(normalLocation);
     program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
+    // Set the material properties for the water
+    program->setUniformValue("MatAmbient", QVector3D(1.0f, 1.0f, 1.0f));
+    program->setUniformValue("MatDiffuse", QVector3D(0.64f, 0.64f, 0.64f));
+    program->setUniformValue("MatSpecular", QVector3D(0.0f, 0.0f, 0.0f));
+    program->setUniformValue("MatShininess", 4.0f);
+
     // Now the plumbing is hooked up, draw what's in the buffer!
     glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, NULL);
 }
@@ -459,6 +465,12 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     int normalLocation = program->attributeLocation("a_normal");
     program->enableAttributeArray(normalLocation);
     program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
+
+    // Set the material properties for the water
+    program->setUniformValue("MatAmbient", QVector3D(1.0f, 1.0f, 1.0f));
+    program->setUniformValue("MatDiffuse", QVector3D(0.64f, 0.64f, 0.64f));
+    program->setUniformValue("MatSpecular", QVector3D(0.0f, 0.0f, 0.0f));
+    program->setUniformValue("MatShininess", 1.0f);
 
     // Now the plumbing is hooked up, draw what's in the buffer!
     glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
