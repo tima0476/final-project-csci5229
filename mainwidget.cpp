@@ -40,6 +40,16 @@ MainWidget::~MainWidget()
     doneCurrent();
 }
 
+QSize MainWidget::minimumSizeHint() const
+{
+    return QSize(400, 300);
+}
+
+QSize MainWidget::sizeHint() const
+{
+    return QSize(1000, 750);
+}
+
 void MainWidget::keyPressEvent(QKeyEvent *e)
 {
     QVector3D mvDir(lookDir);

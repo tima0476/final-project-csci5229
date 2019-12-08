@@ -33,6 +33,8 @@ class MainWidget : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     explicit MainWidget(QWidget *parent = 0);
     ~MainWidget();
+    QSize minimumSizeHint() const override;
+    QSize sizeHint() const override;
 
 protected:
     void mouseMoveEvent(QMouseEvent *e) override;
