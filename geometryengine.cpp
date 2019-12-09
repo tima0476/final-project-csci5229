@@ -427,8 +427,8 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
     // Set the material properties for the water
-    program->setUniformValue("MatAmbient", QVector4D(0.653f, 0.780f, 0.954f, 1.0f));
-    program->setUniformValue("MatDiffuse", QVector4D(0.64f, 0.64f, 0.64f, 1.0f));
+    program->setUniformValue("MatAmbient", QVector4D(0.4f, 0.4f, 0.4f, 1.0f));
+    program->setUniformValue("MatDiffuse", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
     program->setUniformValue("MatSpecular", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
     program->setUniformValue("MatShininess", 32.0f);
 
@@ -467,10 +467,10 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     program->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(vertexData));
 
     // Set the material properties for the land
-    program->setUniformValue("MatAmbient", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
-    program->setUniformValue("MatDiffuse", QVector4D(0.64f, 0.64f, 0.64f, 1.0f));
-    program->setUniformValue("MatSpecular", QVector4D(0,0,0, 1.0f));
-    program->setUniformValue("MatShininess", 1.0f);
+    program->setUniformValue("MatAmbient", QVector4D(0.4f, 0.4f, 0.4f, 1.0f));
+    program->setUniformValue("MatDiffuse", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
+    program->setUniformValue("MatSpecular", QVector4D(0.1,0.1,0.1, 1.0f));
+    program->setUniformValue("MatShininess", 128.0f);
 
     // Now the plumbing is hooked up, draw what's in the buffer!
     glDrawElements(GL_TRIANGLE_STRIP, landFacetsBuf.size() / sizeof(GLuint), GL_UNSIGNED_INT, 0);
