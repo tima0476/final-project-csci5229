@@ -16,7 +16,7 @@
 
 int main(int argc, char *argv[])
 {
-    // srand(time(NULL));
+    srand(4.0);
     QApplication app(argc, argv);
 
     QSurfaceFormat format;

@@ -18,9 +18,9 @@ using namespace std;
 MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
                                           geometries(0),
                                           skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-                                          viewerPos(-WORLD_DIM / 2, 0, WORLD_DIM / 2),
-                                          lookDir(0.7f, 0.0f, -0.7f),
-                                          th(315.0f), ph(0.0f)
+                                          viewerPos(WORLD_DIM, 0, WORLD_DIM),
+                                          lookDir(-0.7f, 0.0f, -0.7f),
+                                          th(225.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -142,7 +142,7 @@ void MainWidget::initializeGL()
 
     // Adjust starting position to be near the lake.
     int retries = 11;
-    while (!geometries->adjustViewerPos(viewerPos, QVector2D(WORLD_DIM / 2.0f, -WORLD_DIM).normalized()) && retries--)
+    while (!geometries->adjustViewerPos(viewerPos, QVector2D(-1,-1).normalized()) && retries--)
     {
         // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
         delete geometries;
@@ -151,12 +151,12 @@ void MainWidget::initializeGL()
 
     // Now find a lookDir that looks along the edge of the lake.
 
-    // Check the terrain 3 clicks away at angle th.  If it is above water, turn left.  Otherwise, turn right.
+    // Check the terrain 3 clicks away at angle th.  If it is above water, turn right.  Otherwise, turn left.
     // Keep turning until the point 3 water proximity clicks away transitions above or below water.
     QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
     QVector3D testLoc(viewerPos + testVec);
     bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
-    float inc(startAbove ? 1.0f : -1.0f);
+    float inc(startAbove ? -1.0f : +1.0f);
     bool curr(startAbove);
     while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
     {
@@ -166,7 +166,7 @@ void MainWidget::initializeGL()
     }
     if (th <= -720.0f || th >= 720.f)
         // The simplistic shoreline search failed.  Revert to a default lookdir
-        th = 247.0f;
+        th = 67.0f;
 
     lookDir.setX(-Sin(th) * Cos(ph));
     lookDir.setY(Sin(ph));
