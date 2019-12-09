@@ -469,7 +469,7 @@ void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
     // Set the material properties for the land
     program->setUniformValue("MatAmbient", QVector4D(0.4f, 0.4f, 0.4f, 1.0f));
     program->setUniformValue("MatDiffuse", QVector4D(1.0f, 1.0f, 1.0f, 1.0f));
-    program->setUniformValue("MatSpecular", QVector4D(0.1,0.1,0.1, 1.0f));
+    program->setUniformValue("MatSpecular", QVector4D(0.1f, 0.1f, 0.1f, 1.0f));
     program->setUniformValue("MatShininess", 128.0f);
 
     // Now the plumbing is hooked up, draw what's in the buffer!
@@ -586,27 +586,29 @@ float GeometryEngine::getHeight(float wx, float wz, bool stayAbove)
 
 bool GeometryEngine::adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir)
 {
-    // Find the edge of the water.
+    // Find the edge of the water.  Assume there is water along the searchDir line from viewerPos
     float y = getHeight(viewerPos.x(), viewerPos.z(), false);
     if (y < waterLevel)
     {
+        // We started below water.  Move until we're above water
         while (y < waterLevel)
         {
-            viewerPos.setX(viewerPos.x() - searchDir.x());
-            viewerPos.setZ(viewerPos.z() - searchDir.y());
+            viewerPos.setX(viewerPos.x() + searchDir.x());
+            viewerPos.setZ(viewerPos.z() + searchDir.y());
 
-            if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM)
+            if ((viewerPos.x() <= -WORLD_DIM) || (viewerPos.x() >= WORLD_DIM) || (viewerPos.z() <= -WORLD_DIM) || (viewerPos.z() >= WORLD_DIM))
                 return (false);
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
         }
     }
     else
     {
+        // We started above water.  Move until we're under water
         while (y >= waterLevel)
         {
             viewerPos.setX(viewerPos.x() + searchDir.x());
             viewerPos.setZ(viewerPos.z() + searchDir.y());
-            if (viewerPos.x() < -WORLD_DIM || viewerPos.x() > WORLD_DIM || viewerPos.z() < -WORLD_DIM || viewerPos.z() > WORLD_DIM)
+            if ((viewerPos.x() <= -WORLD_DIM) || (viewerPos.x() >= WORLD_DIM) || (viewerPos.z() <= -WORLD_DIM) || (viewerPos.z() >= WORLD_DIM))
                 return (false);
             y = getHeight(viewerPos.x(), viewerPos.z(), false);
         }

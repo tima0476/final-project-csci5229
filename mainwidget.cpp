@@ -18,9 +18,9 @@ using namespace std;
 MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
                                           geometries(0),
                                           skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
-                                          viewerPos(WORLD_DIM, 0, WORLD_DIM),
-                                          lookDir(-0.7f, 0.0f, -0.7f),
-                                          th(225.0f), ph(0.0f)
+                                          viewerPos(WORLD_DIM - 1.0f, 0, WORLD_DIM - 1.0f),
+                                          lookDir(-0.707106781, 0.0f, -0.707106781),
+                                          th(225.0f), ph(0.0f)      // Default looking at sun (to show off the water's specular spot)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -108,9 +108,9 @@ void MainWidget::mouseMoveEvent(QMouseEvent *e)
 
     // Update the direction we're looking for the new rotation.  I'm sure there's a way to do this
     // with the Qt quaternion class, but this is straightforward to do it myself.
-    lookDir.setX(-Sin(th) * Cos(ph));
+    lookDir.setX(Sin(th) * Cos(ph));
     lookDir.setY(Sin(ph));
-    lookDir.setZ(-Cos(th) * Cos(ph));
+    lookDir.setZ(Cos(th) * Cos(ph));
 
     // Save the current mouse position so we can calculate a delta on the next mouse move
     mouseLastPosition = QVector2D(e->localPos());
@@ -140,39 +140,17 @@ void MainWidget::initializeGL()
     // Instantiate our geometry engine
     geometries = new GeometryEngine;
 
+    //
     // Adjust starting position to be near the lake.
+    //
     int retries = 11;
-    while (!geometries->adjustViewerPos(viewerPos, QVector2D(-1,-1).normalized()) && retries--)
+    while (!geometries->adjustViewerPos(viewerPos, QVector2D(-0.707106781, -0.707106781)) && retries--)
     {
         // Lake not found.  Delete this world and make another one.  Oh, the POWER!!!
         delete geometries;
         geometries = new GeometryEngine;
     }
 
-    // Now find a lookDir that looks along the edge of the lake.
-
-    // Check the terrain 2 clicks away at angle th.  If it is above water, turn right.  Otherwise, turn left.
-    // Keep turning until the point 3 water proximity clicks away transitions above or below water.
-    QVector3D testVec(-Sin(th) * WATER_START_PROX * 2.0f, 0, -Cos(th) * WATER_START_PROX * 2.0);
-    QVector3D testLoc(viewerPos + testVec);
-    bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
-    float inc(startAbove ? -1.0f : +1.0f);
-    bool curr(startAbove);
-    while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
-    {
-        th += inc;
-        testVec = QVector3D(Sin(th) * WATER_START_PROX * -2.0f, 0, Cos(th) * WATER_START_PROX * -2.0f);
-        testLoc = viewerPos + testVec;
-    }
-    if (th <= -720.0f || th >= 720.f)
-        // The simplistic shoreline search failed.  Revert to a default lookdir
-        th = 67.0f;
-
-    lookDir.setX(-Sin(th) * Cos(ph));
-    lookDir.setY(Sin(ph));
-    lookDir.setZ(-Cos(th) * Cos(ph));
-
-    // Set our eye initial height based on the terrain
     viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
 }
 
@@ -245,7 +223,7 @@ void MainWidget::paintGL()
 
     // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
     QVector3D lightPos(-WORLD_DIM, WORLD_DIM / 2.0f, -WORLD_DIM / 2.0f);
-    lightPos = QVector3D(matrix * lightPos);    // transform the light to world coordinates
+    lightPos = QVector3D(matrix * lightPos); // transform the light to world coordinates
 
     // Bind skybox shader pipeline
     if (!skyProgram.bind())
