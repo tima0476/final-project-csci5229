@@ -98,3 +98,6 @@ Low polygon spruce tree model:
 
 GLSL Programming/Unity/Transparent Textures - Discarding Transparent Fragments:
 	https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Transparent_Textures
+
+OpenGL Software Development Kit- Per Fragment Lighting Tutorial example code:
+    https://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/lighting.php
