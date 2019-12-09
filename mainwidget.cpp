@@ -64,6 +64,7 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         break;
 
     case Qt::Key_S:
+    case Qt::Key_X:
         // Move backwards
         geometries->move(viewerPos, -mvDir);
         break;
@@ -77,9 +78,29 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         // Move right;
         geometries->move(viewerPos, QVector2D(-mvDir.y(), mvDir.x()));
         break;
+    
+    case Qt::Key_Q:
+        // Move diagonal fwd-left
+        geometries->move(viewerPos, QVector2D( (mvDir.x()+mvDir.y())/2, (mvDir.y()-mvDir.x()/2)));
+        break;
+    
+    case Qt::Key_E:
+        // Move diagonal fwd-right
+        geometries->move(viewerPos, QVector2D( (mvDir.x()-mvDir.y())/2, (mvDir.y()+mvDir.x()/2)));
+        break;
+
+    case Qt::Key_Z:
+        // Move diagonal back-left
+        geometries->move(viewerPos, QVector2D( (-mvDir.x()+mvDir.y())/2, (-mvDir.y()-mvDir.x()/2)));
+        break;
+    
+    case Qt::Key_C:
+        // Move diagonal back-right
+        geometries->move(viewerPos, QVector2D( (-mvDir.x()-mvDir.y())/2, (-mvDir.y()+mvDir.x()/2)));
+        break;
 
     case Qt::Key_Escape:
-    case Qt::Key_Q:
+
         // exit application
         close();
     }
@@ -246,12 +267,14 @@ void MainWidget::paintGL()
     geometries->drawLandGeometry(&mainProgram);
 
     // Draw all of the trees
+    srand(1234.0);     // Cheat to get consistent "random" tree rotations without having to store a rotation angle alongside each tree
     for (int i = 0; i < TREE_COUNT; i++)
     {
         // Set translation matrix for each tree to individually locate and resize them in the world
         treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
+        treePos.rotate(Frand(360.0),0,1,0);
 
         mainProgram.setUniformValue("mv_matrix", treePos);
         mainProgram.setUniformValue("mvp_matrix", projection * treePos);
