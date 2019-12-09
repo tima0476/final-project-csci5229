@@ -225,7 +225,7 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    const qreal zNear = 3.0f / WORLD_DIM, zFar = 3.0f * WORLD_DIM, fov = 55.0;
+    const qreal zNear = 1.0f / WORLD_DIM, zFar = 3.0f * WORLD_DIM, fov = 55.0;
 
     // Set perspective projection
     projection.setToIdentity();
@@ -245,6 +245,7 @@ void MainWidget::paintGL()
 
     // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
     QVector3D lightPos(-WORLD_DIM, WORLD_DIM / 2.0f, -WORLD_DIM / 2.0f);
+    lightPos = QVector3D(matrix * lightPos);    // transform the light to world coordinates
 
     // Bind skybox shader pipeline
     if (!skyProgram.bind())
@@ -268,14 +269,14 @@ void MainWidget::paintGL()
     mainProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
     mainProgram.setUniformValue("lightPosition", lightPos);
 
+    // Draw the water
+    waterTexture->bind();
+    geometries->drawWaterGeometry(&mainProgram);
+
     // Draw the land
     mainProgram.setUniformValue("texture", 0);
     landTexture->bind();
     geometries->drawLandGeometry(&mainProgram);
-
-    // Draw the water
-    waterTexture->bind();
-    geometries->drawWaterGeometry(&mainProgram);
 
     // Draw all of the trees
     for (int i = 0; i < TREE_COUNT; i++)
@@ -284,8 +285,6 @@ void MainWidget::paintGL()
         treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
-
-        mainProgram.setUniformValue("normalMatrix", treePos.normalMatrix());
 
         mainProgram.setUniformValue("mv_matrix", treePos);
         mainProgram.setUniformValue("mvp_matrix", projection * treePos);
