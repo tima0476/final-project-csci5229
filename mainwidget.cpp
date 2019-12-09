@@ -151,9 +151,9 @@ void MainWidget::initializeGL()
 
     // Now find a lookDir that looks along the edge of the lake.
 
-    // Check the terrain 3 clicks away at angle th.  If it is above water, turn right.  Otherwise, turn left.
+    // Check the terrain 2 clicks away at angle th.  If it is above water, turn right.  Otherwise, turn left.
     // Keep turning until the point 3 water proximity clicks away transitions above or below water.
-    QVector3D testVec(-Sin(th) * WATER_START_PROX * 3.0f, 0, -Cos(th) * WATER_START_PROX * 3.0);
+    QVector3D testVec(-Sin(th) * WATER_START_PROX * 2.0f, 0, -Cos(th) * WATER_START_PROX * 2.0);
     QVector3D testLoc(viewerPos + testVec);
     bool startAbove(geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel());
     float inc(startAbove ? -1.0f : +1.0f);
@@ -161,7 +161,7 @@ void MainWidget::initializeGL()
     while (startAbove == (curr = geometries->getHeight(testLoc.x(), testLoc.z(), false) > geometries->getWaterLevel()) && th > -720.0f && th < 720.0f)
     {
         th += inc;
-        testVec = QVector3D(Sin(th) * WATER_START_PROX * -3.0f, 0, Cos(th) * WATER_START_PROX * -3.0f);
+        testVec = QVector3D(Sin(th) * WATER_START_PROX * -2.0f, 0, Cos(th) * WATER_START_PROX * -2.0f);
         testLoc = viewerPos + testVec;
     }
     if (th <= -720.0f || th >= 720.f)
