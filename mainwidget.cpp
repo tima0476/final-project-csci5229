@@ -20,7 +20,7 @@ MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
                                           skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
                                           viewerPos(WORLD_DIM - 1.0f, 0, WORLD_DIM - 1.0f),
                                           lookDir(-0.707106781, 0.0f, -0.707106781),
-                                          th(225.0f), ph(0.0f)      // Default looking at sun (to show off the water's specular spot)
+                                          th(225.0f), ph(0.0f) // Default looking at sun (to show off the water's specular spot)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -42,12 +42,12 @@ MainWidget::~MainWidget()
 
 QSize MainWidget::minimumSizeHint() const
 {
-    return QSize(400, 300);
+    return QSize(400, 225);
 }
 
 QSize MainWidget::sizeHint() const
 {
-    return QSize(1000, 750);
+    return QSize(1200, 675);
 }
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
