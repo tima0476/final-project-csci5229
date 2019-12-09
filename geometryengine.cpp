@@ -648,3 +648,38 @@ void GeometryEngine::placeTrees(void)
         treeSpot[i] = QVector4D(x, y - TREE_SINK, z, TREE_RANGE_L + Frand(TREE_RANGE_H - TREE_RANGE_L));
     }
 }
+
+// Move the viewerPos in the direction indicated, subject to restraints.  The viewerPos will not be updated if
+// the movement would result in the viewer being...
+// * In the water
+// * In a tree
+// * Too close to the edge of the world (defined by EDGE_DISTANCE)
+void GeometryEngine::move(QVector3D &viewerPos, QVector2D dir)
+{
+    QVector3D candidate(viewerPos);
+    
+    candidate.setX(candidate.x() + dir.x());
+    candidate.setZ(candidate.z() + dir.y());
+
+    // check if the new position is sufficiently inside the world
+    if ((candidate.x() <= (WORLD_DIM-EDGE_DISTANCE)) && (candidate.x() >= -(WORLD_DIM-EDGE_DISTANCE)) && (candidate.z() <= (WORLD_DIM-EDGE_DISTANCE)) && (candidate.z() >= -(WORLD_DIM-EDGE_DISTANCE)))
+    {
+        // check if the new position is above water
+        float h = getHeight(candidate.x(), candidate.z(), false);
+        if (h > getWaterLevel())
+        {
+            // check if the new position is far enough away from a tree
+            if (closestTree(candidate.x(), candidate.z()) > TREE_MIN_STAND)
+            {
+                // cout << "Passed tree test.";
+                // We satisfied all of the move conditions.  Go ahead and move
+                viewerPos.setX(candidate.x());
+                viewerPos.setZ(candidate.z());
+
+                // Maintain a fixed eye height above the ground
+                viewerPos.setY(h + EYE_HEIGHT);
+            }
+        }
+    }
+    cout << endl;
+}

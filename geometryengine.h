@@ -28,6 +28,9 @@
 #define TREE_RANGE_H 0.75f    // The maximum size range of the trees (multiplier)
 #define TREE_SINK 0.0f        // how far underground trees extend
 #define TREE_MIN_PROX 0.25f   // minimum distance between trees
+#define TREE_MIN_STAND 0.1f   // the closest the viewer can stand to a tree
+#define EDGE_DISTANCE 1.0f    // the closest the viewer can be to the edge of the world (in walkaround mode)
+#define EYE_HEIGHT  0.5f
 
 // Convenience macros to improve readability
 #define Coord_2on1(X, Z) ((Z)*LAND_DIVS + (X))
@@ -68,6 +71,7 @@ public:
     bool adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir);
     float getWaterLevel(void) { return waterLevel; }
     void placeTrees(void);
+    void move(QVector3D &viewerPos, QVector2D dir);
 
     QVector4D treeSpot[TREE_COUNT]; // xyz for location of each tree.  W will use for random scaling
 

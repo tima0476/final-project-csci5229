@@ -52,9 +52,7 @@ QSize MainWidget::sizeHint() const
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
 {
-    QVector3D mvDir(lookDir);
-
-    mvDir.setY(0);     // For this sim, we are locked to the ground.
+    QVector2D mvDir(lookDir.x(),lookDir.z());
     mvDir.normalize(); // Move a fixed amount, even if user is starting at the sky or the ground
     mvDir *= MOVE_AMT;
 
@@ -62,24 +60,22 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
     {
     case Qt::Key_W:
         // Move forward
-        viewerPos += mvDir;
+        geometries->move(viewerPos, mvDir);
         break;
 
     case Qt::Key_S:
         // Move backwards
-        viewerPos -= mvDir;
+        geometries->move(viewerPos, -mvDir);
         break;
 
     case Qt::Key_A:
         // Move left
-        viewerPos.setX(viewerPos.x() + mvDir.z());
-        viewerPos.setZ(viewerPos.z() - mvDir.x());
+        geometries->move(viewerPos, QVector2D(mvDir.y(), -mvDir.x()));
         break;
 
     case Qt::Key_D:
         // Move right;
-        viewerPos.setX(viewerPos.x() - mvDir.z());
-        viewerPos.setZ(viewerPos.z() + mvDir.x());
+        geometries->move(viewerPos, QVector2D(-mvDir.y(), mvDir.x()));
         break;
 
     case Qt::Key_Escape:
@@ -87,14 +83,10 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
         // exit application
         close();
     }
+    update();
 
     // Allow the base class to also handle all keypress events
     QOpenGLWidget::keyPressEvent(e);
-
-    // Maintain a fixed eye height above the ground
-    viewerPos.setY(geometries->getHeight(viewerPos.x(), viewerPos.z()) + EYE_HEIGHT);
-
-    update();
 }
 
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
@@ -241,7 +233,7 @@ void MainWidget::paintGL()
     if (!mainProgram.bind())
         close();
 
-    // Set modelview-projection matrix
+    // Set uniforms for the main shader
     mainProgram.setUniformValue("mv_matrix", matrix);
     mainProgram.setUniformValue("mvp_matrix", projection * matrix);
     mainProgram.setUniformValue("normalMatrix", matrix.normalMatrix());
@@ -259,7 +251,7 @@ void MainWidget::paintGL()
     // Draw all of the trees
     for (int i = 0; i < TREE_COUNT; i++)
     {
-        // Set translation matrix
+        // Set translation matrix for each tree to individually locate and resize them in the world
         treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());

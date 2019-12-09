@@ -21,7 +21,6 @@
 #define Cos(x) (cos((x)*3.1415926/180.0))
 #define Sin(x) (sin((x)*3.1415926/180.0))
 
-#define EYE_HEIGHT  0.5f
 #define MOVE_AMT    0.1f    // amount to move on each keypress
 
 class GeometryEngine;
