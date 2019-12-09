@@ -174,17 +174,14 @@ void MainWidget::initTextures()
     landTexture = new QOpenGLTexture(QImage(":/textures/Land/85290912-seamless-tileable-natural-ground-field-texture.jpg").mirrored());
     waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
 
-    // Set nearest filtering mode for texture minification
-    skyTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    landTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
-    waterTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+    skyTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
+    landTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
+    waterTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
 
-    // Set bilinear filtering mode for texture magnification
     skyTexture->setMagnificationFilter(QOpenGLTexture::Linear);
     landTexture->setMagnificationFilter(QOpenGLTexture::Linear);
     waterTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
-    // Wrap texture coordinates by repeating
     skyTexture->setWrapMode(QOpenGLTexture::Repeat);
     landTexture->setWrapMode(QOpenGLTexture::Repeat);
     waterTexture->setWrapMode(QOpenGLTexture::Repeat);

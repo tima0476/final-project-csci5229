@@ -81,7 +81,7 @@ void GeometryEngine::initTreeGeometry()
 
         // Set up the texture for this section
         treeTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
-        treeTexture.last()->setMinificationFilter(QOpenGLTexture::NearestMipMapLinear);
+        treeTexture.last()->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
         treeTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
         treeTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
 
@@ -681,5 +681,4 @@ void GeometryEngine::move(QVector3D &viewerPos, QVector2D dir)
             }
         }
     }
-    cout << endl;
 }

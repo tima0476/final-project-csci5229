@@ -19,7 +19,7 @@
 #define LAND_TEX_REPS 40      // The number of times the land texture repeats over the width and depth of the world
 #define WORLD_DIM 40.0f       // Half the width & depth & height of the world
 #define TERRAIN_RANGE 3.0f    // The maximum height range of the terrain
-#define TERRAIN_SMOOTH 6.0f   // Larger numbers give smoother terrain
+#define TERRAIN_SMOOTH 8.0f   // Larger numbers give smoother terrain
 #define WATER_LEVEL -1.5f     // elevation of water surface as offset from avg
 #define WATER_TEX_REPS 35.0f  // number of times to repeat the water texture
 #define WATER_START_PROX 2.0f // Starting distance from the edge of the water
@@ -28,9 +28,9 @@
 #define TREE_RANGE_H 0.75f    // The maximum size range of the trees (multiplier)
 #define TREE_SINK 0.0f        // how far underground trees extend
 #define TREE_MIN_PROX 0.25f   // minimum distance between trees
-#define TREE_MIN_STAND 0.1f   // the closest the viewer can stand to a tree
+#define TREE_MIN_STAND 0.2f   // the closest the viewer can stand to a tree
 #define EDGE_DISTANCE 1.0f    // the closest the viewer can be to the edge of the world (in walkaround mode)
-#define EYE_HEIGHT  0.5f
+#define EYE_HEIGHT  0.5f      // How high the viewer's eyes are above the ground
 
 // Convenience macros to improve readability
 #define Coord_2on1(X, Z) ((Z)*LAND_DIVS + (X))
