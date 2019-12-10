@@ -267,14 +267,12 @@ void MainWidget::paintGL()
     geometries->drawLandGeometry(&mainProgram);
 
     // Draw all of the trees
-    srand(1234.0);     // Cheat to get consistent "random" tree rotations without having to store a rotation angle alongside each tree
     for (int i = 0; i < TREE_COUNT; i++)
     {
         // Set translation matrix for each tree to individually locate and resize them in the world
         treePos = matrix;
         treePos.translate(geometries->treeSpot[i].toVector3D());
         treePos.scale(geometries->treeSpot[i].w(), geometries->treeSpot[i].w(), geometries->treeSpot[i].w());
-        treePos.rotate(Frand(360.0),0,1,0);
 
         mainProgram.setUniformValue("mv_matrix", treePos);
         mainProgram.setUniformValue("mvp_matrix", projection * treePos);
