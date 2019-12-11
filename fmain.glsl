@@ -43,6 +43,7 @@ void main (void)
     // write Total Color:  
     gl_FragColor = (Iamb + Idiff + Ispec) * texture2D(texture,v_texcoord);
 
+    // If the fragment alpha is less than a threshold, then throw it away.  Cutouts are that simple.
     if (gl_FragColor.a < 0.5)
         discard;
 }

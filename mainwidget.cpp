@@ -10,17 +10,14 @@
 #include <QMouseEvent>
 
 #include <math.h>
-#ifdef DEBUG_GEOM
-#include <iostream>
-using namespace std;
-#endif // DEBUG_GEOM
 
 MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
                                           geometries(0),
                                           skyTexture(NULL), landTexture(NULL), waterTexture(NULL),
                                           viewerPos(WORLD_DIM - 1.0f, 0, WORLD_DIM - 1.0f),
+                                          // Default looking at sun (to show off the water's specular spot)
                                           lookDir(-0.707106781, 0.0f, -0.707106781),
-                                          th(225.0f), ph(0.0f) // Default looking at sun (to show off the water's specular spot)
+                                          th(225.0f), ph(0.0f)
 {
     // Disable mouse tracking - mousepos events will only fire when left mouse button pressed
     setMouseTracking(false);
@@ -31,8 +28,7 @@ MainWidget::MainWidget(QWidget *parent) : QOpenGLWidget(parent),
 
 MainWidget::~MainWidget()
 {
-    // Make sure the context is current when deleting the skyTexture
-    // and the buffers.
+    // Make sure the context is current when deleting textures and buffers.
     makeCurrent();
     delete skyTexture;
     delete landTexture;
@@ -47,7 +43,7 @@ QSize MainWidget::minimumSizeHint() const
 
 QSize MainWidget::sizeHint() const
 {
-    return QSize(1200, 675);
+    return QSize(800, 450);
 }
 
 void MainWidget::keyPressEvent(QKeyEvent *e)
@@ -112,11 +108,14 @@ void MainWidget::keyPressEvent(QKeyEvent *e)
 
 void MainWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    // 1 mouse pixel of L/R movement = 1 degree of theta rotation (about y axis)
+    // Use mouse movement to update where the viewer is looking
+
     th -= (e->localPos().x() - mouseLastPosition.x()) / 3.0f;
     ph -= (e->localPos().y() - mouseLastPosition.y()) / 3.0f;
-    ph = MIN(ph,85.0f);
-    ph = MAX(ph,-85.0f);
+
+    // Cap up and down looking to +/- 89 degrees
+    ph = MIN(ph,89.0f);
+    ph = MAX(ph,-89.0f);
 
     th = fmod(th, 360.0f); // bound th within -360 to 360 degrees
     ph = fmod(ph, 360.0f); // bound ph within -360 to 360 degrees
@@ -144,7 +143,7 @@ void MainWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(0.31f, 0.43f, 0.65f, 1); // Sky color sampled from the skybox texture image
+    glClearColor(0.31f, 0.43f, 0.65f, 1); // Sky color sampled from the skybox texture
 
     initShaders();
     initTextures();
@@ -152,7 +151,7 @@ void MainWidget::initializeGL()
     // Enable depth buffer
     glEnable(GL_DEPTH_TEST);
 
-    // Instantiate our geometry engine
+    // Instantiate our geometry class
     geometries = new GeometryEngine;
 
     //
@@ -197,6 +196,7 @@ void MainWidget::initTextures()
     landTexture = new QOpenGLTexture(QImage(":/textures/Land/85290912-seamless-tileable-natural-ground-field-texture.jpg").mirrored());
     waterTexture = new QOpenGLTexture(QImage(":/textures/Water/WaterPlain0012_1_270.jpg").mirrored());
 
+    // Set texture display parameters
     skyTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
     landTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
     waterTexture->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
@@ -215,36 +215,35 @@ void MainWidget::resizeGL(int w, int h)
     // Calculate aspect ratio to keep pixels square
     qreal aspect = qreal(w) / qreal(h ? h : 1);
 
-    const qreal zNear = 1.0f / WORLD_DIM, zFar = 3.0f * WORLD_DIM, fov = 55.0;
+    const qreal zNear = 1.0f / WORLD_DIM;
+    const qreal zFar = 3.0f * WORLD_DIM;
+    const qreal fov = 55.0;
 
     // Set perspective projection
     projection.setToIdentity();
     projection.perspective(fov, aspect, zNear, zFar);
 }
 
+// Render the world (one frame at a time)
 void MainWidget::paintGL()
 {
-    QMatrix4x4 treePos;
-
     // Clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Calculate model view transformation
+    // Calculate model view transformation matrix
     QMatrix4x4 matrix;
     matrix.lookAt(viewerPos, viewerPos + lookDir, QVector3D(0, 1, 0)); // +Y is always up
 
-    // Locate a light source to correspond with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
+    // Locate a light source to correspond (roughly) with the sun in the skybox texture (3/4 up, 3/4 back, on the left face)
     QVector3D lightPos(-WORLD_DIM, WORLD_DIM / 2.0f, -WORLD_DIM / 2.0f);
     lightPos = QVector3D(matrix * lightPos); // transform the light to world coordinates
 
-    // Bind skybox shader pipeline
+    // Bind skybox shader pipeline (no lighting on the skybox)
     if (!skyProgram.bind())
         close();
 
-    // Set modelview-projection matrix
-    skyProgram.setUniformValue("mvp_matrix", projection * matrix);
-
     // Draw the skybox
+    skyProgram.setUniformValue("mvp_matrix", projection * matrix);
     skyProgram.setUniformValue("texture", 0);
     skyTexture->bind();
     geometries->drawSkyCubeGeometry(&skyProgram);
@@ -269,6 +268,7 @@ void MainWidget::paintGL()
     geometries->drawLandGeometry(&mainProgram);
 
     // Draw all of the trees
+    QMatrix4x4 treePos;
     for (int i = 0; i < TREE_COUNT; i++)
     {
         // Set translation matrix for each tree to individually locate and resize them in the world

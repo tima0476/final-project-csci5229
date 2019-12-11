@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** A class and assiated data structures for parsing and storing 3d object 
+** A class and associated data structures for parsing and storing 3d object 
 ** definitions from Wavefront obj format data files.  Note:  This is not a 
 ** full implementation of the spec (ref: http://www.martinreddy.net/gfx/3d/OBJ.spec).  
 ** Instead, this only implements the minimum necessary for this application.
@@ -21,6 +21,7 @@ wavefrontObj::wavefrontObj(QString filename)
     loadObj(filename);
 }
 
+// Parse an obj file into memory
 bool wavefrontObj::loadObj(QString filename)
 {
     QString fn(":/obj/" + filename);
@@ -33,6 +34,7 @@ bool wavefrontObj::loadObj(QString filename)
         {
             if (line.isEmpty())
                 continue; // skip blank lines else token[0] will segfault
+
             QStringList token = line.split(' ', QString::SkipEmptyParts);
             QString cmd = token[0]; // The first token on a line is the command
             if (cmd == "o")
@@ -103,14 +105,8 @@ bool wavefrontObj::loadObj(QString filename)
     else
     {
         cerr << "Cannot open file " << filename.toStdString() << endl;
-#ifdef DEBUG_OBJ
-        debugDump();
-#endif // DEBUG_OBJ
         return false;
     }
-#ifdef DEBUG_OBJ
-    debugDump();
-#endif // DEBUG_OBJ
     return true;
 }
 
@@ -133,6 +129,7 @@ bool wavefrontObj::setMaterial(QString name)
     return false;
 }
 
+// Parse a material definition (mtl) file into memory
 bool wavefrontObj::loadMaterialFile(QString filename)
 {
     QString fn(":/obj/" + filename);
@@ -251,59 +248,4 @@ bool wavefrontObj::loadMaterialFile(QString filename)
     }
 
     return true;
-}
-
-// A better way would be to subclass the QVector classes and provide toStr() methods, but this is more expedient
-// in the short term...
-#define V2(X) (X).x() << "," << (X).y()
-#define V3(X) (X).x() << "," << (X).y() << "," << (X).z()
-#define V4(X) (X).x() << "," << (X).y() << "," << (X).z() << "," << (X).w()
-
-void wavefrontObj::debugDump(void)
-{
-    cout << "wavefrontObj::debugDump()..." << endl;
-
-    cout << "Name = '" << data.name.toStdString() << "'" << endl;
-
-    cout << data.v.size() << " vertices:" << endl;
-    for (int i = 0; i < data.v.size(); i++)
-        cout << "  " << V3(data.v[i]) << endl;
-
-    cout << data.vt.size() << " texture coordinates:" << endl;
-    for (int i = 0; i < data.vt.size(); i++)
-        cout << "  " << V2(data.vt[i]) << endl;
-
-    cout << data.vn.size() << " normals:" << endl;
-    for (int i = 0; i < data.vn.size(); i++)
-        cout << "  " << V3(data.vn[i]) << endl;
-
-    cout << data.section.size() << " object sections:" << endl;
-
-    for (int i = 0; i < data.section.size(); i++)
-    {
-        bool lBreak = false;
-        cout << "  Dump section " << i + 1 << "..." << endl;
-        objectSection *s = &data.section[i];
-        cout << "    Material '" << s->mtl.name.toStdString() << "'" << endl;
-        cout << "                  Ns = " << s->mtl.Ns << endl;
-        cout << "                  Ka = " << V4(s->mtl.Ka) << endl;
-        cout << "                  Kd = " << V4(s->mtl.Kd) << endl;
-        cout << "                  Ks = " << V4(s->mtl.Ks) << endl;
-        cout << "                   d = " << s->mtl.d << endl;
-        cout << "      map_d_filename = '" << s->mtl.map_d_filename.toStdString() << "'" << endl;
-        cout << "    " << s->f.size() << " facets:" << endl;
-        for (int j = 0; j < s->f.size(); j++)
-        {
-            cout << " " << s->f[j].v << "/" << s->f[j].vt << "/" << s->f[j].vn;
-            if (s->f[j].edge)
-            {
-                if (lBreak)
-                    cout << endl;
-                lBreak = !lBreak;
-            }
-        }
-    }
-
-    cout << endl
-         << endl;
 }

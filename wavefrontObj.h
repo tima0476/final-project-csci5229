@@ -20,8 +20,6 @@
 #include <QFile>
 #include <QTextStream>
 
-// #define DEBUG_OBJ
-
 struct materialData
 {
     QString name;

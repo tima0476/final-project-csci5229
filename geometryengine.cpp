@@ -59,6 +59,7 @@ GeometryEngine::~GeometryEngine()
     }
 }
 
+// Initialize the geometry for a tree
 void GeometryEngine::initTreeGeometry()
 {
     // The obj loader has vertices, texture coordinates, and normal coordinates in three separate arrays which are indexed independently,
@@ -68,7 +69,7 @@ void GeometryEngine::initTreeGeometry()
     // arrays.  Each vertex / index pair will represent a single "object section" such as trunk, branches
     int numSections = tree.data.section.size();
 
-    QVector<vertexData> vertex[numSections];
+    QVector<vertexData> vertex[numSections]; // Dynamically sized array of fixed-size arrays
     QVector<GLushort> index[numSections];
 
     facetChunk.clear();
@@ -81,7 +82,7 @@ void GeometryEngine::initTreeGeometry()
 
         // Set up the texture for this section
         treeTexture << new QOpenGLTexture(QImage(mtl->map_d_filename).mirrored());
-        treeTexture.last()->setMinificationFilter(QOpenGLTexture::LinearMipMapLinear);
+        treeTexture.last()->setMinificationFilter(QOpenGLTexture::LinearMipMapNearest);
         treeTexture.last()->setMagnificationFilter(QOpenGLTexture::Linear);
         treeTexture.last()->setWrapMode(QOpenGLTexture::Repeat);
 
@@ -138,9 +139,12 @@ void GeometryEngine::initTreeGeometry()
     }
 }
 
+// Initialize the geometry for the land grid.
 void GeometryEngine::initLandGeometry()
 {
+    //
     // Build an array of vertices, texture coords, and normals in local memory
+    //
     for (int zi = 0; zi < LAND_DIVS; zi++)
     {
         float zfrac = zi / float(LAND_DIVS - 1);
@@ -159,7 +163,7 @@ void GeometryEngine::initLandGeometry()
                 QVector2D(xfrac * LAND_TEX_REPS, zfrac * LAND_TEX_REPS), // Texture Coordinate
 
                 // Normal vertex
-                QVector3D() // compute later after random terrain generated
+                QVector3D() // placeholder.  Compute normals later; after random terrain generated
             };
         }
     }
@@ -170,13 +174,15 @@ void GeometryEngine::initLandGeometry()
     landVerts[Coord_2on1(0, LAND_DIVS - 1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
     landVerts[Coord_2on1(LAND_DIVS - 1, LAND_DIVS - 1)].position.setY(Frand(-TERRAIN_RANGE) - (TERRAIN_RANGE / 2.0f));
 
-    // Bias terrain to be bowl shaped by forcing a very low elevation of the initial center point
+    // Bias the terrain to be bowl shaped by forcing the center point to a very low altitude
     landVerts[Coord_2on1(LAND_DIVS / 2, LAND_DIVS / 2)].position.setY(-TERRAIN_RANGE - 5.0f);
 
     // Randomize the terrain heights
     diamondSquare(LAND_DIVS, true);
 
+    //
     // Calculate normals, and also calculate the average elevation for use in determining the water level
+    //
     landAvg = 0.0;
     for (int zi = 0; zi < LAND_DIVS; zi++)
     {
@@ -186,16 +192,13 @@ void GeometryEngine::initLandGeometry()
 
             // Calculate the direction vectors to the (2..4) adjacent grid points.  Handle "edge of the grid" cases with zero vectors
             // because they will then drop out when used in a cross-product.  (default QVector3d with null constructor is a zero vector)
-            QVector3D va;
+            QVector3D va, vb, vc, vd;
             if (zi)
                 va = landVerts[Coord_2on1(xi, zi - 1)].position - p;
-            QVector3D vb;
             if (xi < LAND_DIVS - 1)
                 vb = landVerts[Coord_2on1(xi + 1, zi)].position - p;
-            QVector3D vc;
             if (zi < LAND_DIVS - 1)
                 vc = landVerts[Coord_2on1(xi, zi + 1)].position - p;
-            QVector3D vd;
             if (xi)
                 vd = landVerts[Coord_2on1(xi - 1, zi)].position - p;
 
@@ -246,6 +249,7 @@ void GeometryEngine::initLandGeometry()
     landFacetsBuf.allocate(indices, sizeof(indices));
 }
 
+// Initialize the geometry for the water.  This is just a simple flat planar surface with a repeating water texture
 void GeometryEngine::initWaterGeometry()
 {
     // Dynamically set the water level
@@ -259,8 +263,7 @@ void GeometryEngine::initWaterGeometry()
         {QVector3D(WORLD_DIM, waterLevel, WORLD_DIM), QVector2D(WATER_TEX_REPS, 0.0f), QVector3D(0.0f, 1.0f, 0.0f)},
     };
 
-    GLushort indices[] = {
-        0, 2, 1, 3};
+    GLushort indices[] = {0, 2, 1, 3}; // That's it - 4 vertices
 
     waterVertBuf.bind();
     waterVertBuf.allocate(vertices, sizeof(vertices));
@@ -269,6 +272,7 @@ void GeometryEngine::initWaterGeometry()
     waterFacetsBuf.allocate(indices, sizeof(indices));
 }
 
+// Initialize the geometry for the sky cube
 void GeometryEngine::initSkyCubeGeometry()
 {
     unlitVertexData vertices[] = {
@@ -325,6 +329,8 @@ void GeometryEngine::initSkyCubeGeometry()
     skyFacetsBuf.allocate(indices, sizeof(indices));
 }
 
+// Draw a single tree.  This assumes that the model-view matrix, model-view-perspective matrix, normal matrix, and
+// light position uniforms have already been mapped to the passed-in shader program.
 void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
 {
     // Cycle through the "object sections"
@@ -336,12 +342,13 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
         treeVertBuf[i].bind();
         treeFacetsBuf[i].bind();
 
-        // Running calculation of offsets
-        quintptr offset = 0;
-
         //
         // Connect shader plumbing
         //
+
+        // Running calculation of offsets for each sub-element in the packed vertex array
+        quintptr offset = 0;
+
         // vertex positions
         int vertexLocation = program->attributeLocation("a_position");
         program->enableAttributeArray(vertexLocation);
@@ -371,6 +378,8 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
     }
 }
 
+// Draw the skycube.  This assumes that the model-view matrix, model-view-perspective matrix, normal matrix, and
+// light position uniforms have already been mapped to the passed-in shader program.
 void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
@@ -396,6 +405,8 @@ void GeometryEngine::drawSkyCubeGeometry(QOpenGLShaderProgram *program)
     glDrawElements(GL_TRIANGLE_STRIP, skyFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, NULL);
 }
 
+// Draw the water.  This assumes that the model-view matrix, model-view-perspective matrix, normal matrix, and
+// light position uniforms have already been mapped to the passed-in shader program.
 void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
@@ -436,6 +447,8 @@ void GeometryEngine::drawWaterGeometry(QOpenGLShaderProgram *program)
     glDrawElements(GL_TRIANGLE_STRIP, waterFacetsBuf.size() / sizeof(GLushort), GL_UNSIGNED_SHORT, NULL);
 }
 
+// Draw the land grid.  This assumes that the model-view matrix, model-view-perspective matrix, normal matrix, and
+// light position uniforms have already been mapped to the passed-in shader program.
 void GeometryEngine::drawLandGeometry(QOpenGLShaderProgram *program)
 {
     // Tell OpenGL which VBOs to use
@@ -492,7 +505,7 @@ void GeometryEngine::diamondSquare(int size, bool presetCenter)
     if (half < 1)
         return;
 
-    //square steps - skip if center point is pre-set
+    // square steps - skip if center point is pre-set (my own modification to allow biasing the shape of the terrain)
     if (!presetCenter)
         for (int z = half; z < LAND_DIVS; z += size)
             for (int x = half; x < LAND_DIVS; x += size)
@@ -584,6 +597,8 @@ float GeometryEngine::getHeight(float wx, float wz, bool stayAbove)
         return (landVerts[Coord_2on1(x, z)].position.y());
 }
 
+// Starting from viewerPos, move in the direction of searchDir until water is found.
+// returns true if successful, false if no water found along the search path.
 bool GeometryEngine::adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir)
 {
     // Find the edge of the water.  Assume there is water along the searchDir line from viewerPos
@@ -621,6 +636,7 @@ bool GeometryEngine::adjustViewerPos(QVector3D &viewerPos, QVector2D searchDir)
     return (true);
 }
 
+// Return the distance to the closest tree from a given point
 float GeometryEngine::closestTree(float x, float z)
 {
     float minDist = FLT_MAX;
@@ -633,6 +649,11 @@ float GeometryEngine::closestTree(float x, float z)
     return sqrt(minDist);
 }
 
+// Randomly place the trees in the world, making sure none of them are underwater and they maintain a
+// minimum spacing.  Warning:  This has the potential to become an infinite loop if too many trees are
+// attempted to be placed within a too-small area.  There is no logic present to guard against that.
+// As long as the tree count is sufficiently small and the land grid size is sufficiently large, this
+// won't be a problem.
 void GeometryEngine::placeTrees(void)
 {
     float x, y, z;
@@ -657,12 +678,12 @@ void GeometryEngine::placeTrees(void)
 void GeometryEngine::move(QVector3D &viewerPos, QVector2D dir)
 {
     QVector3D candidate(viewerPos);
-    
+
     candidate.setX(candidate.x() + dir.x());
     candidate.setZ(candidate.z() + dir.y());
 
     // check if the new position is sufficiently inside the world
-    if ((candidate.x() <= (WORLD_DIM-EDGE_DISTANCE)) && (candidate.x() >= -(WORLD_DIM-EDGE_DISTANCE)) && (candidate.z() <= (WORLD_DIM-EDGE_DISTANCE)) && (candidate.z() >= -(WORLD_DIM-EDGE_DISTANCE)))
+    if ((candidate.x() <= (WORLD_DIM - EDGE_DISTANCE)) && (candidate.x() >= -(WORLD_DIM - EDGE_DISTANCE)) && (candidate.z() <= (WORLD_DIM - EDGE_DISTANCE)) && (candidate.z() >= -(WORLD_DIM - EDGE_DISTANCE)))
     {
         // check if the new position is above water
         float h = getHeight(candidate.x(), candidate.z(), false);
