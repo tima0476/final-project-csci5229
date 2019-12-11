@@ -374,7 +374,7 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
 
         // Draw it (i.e., spew our chunks)
         for (int j = 0; j < facetChunk[i].size(); j++)
-            glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, facetChunk[i][j].count, GL_UNSIGNED_SHORT, NULL, facetChunk[i][j].base);
+            glDrawArrays(GL_TRIANGLE_STRIP, facetChunk[i][j].base, facetChunk[i][j].count);
     }
 }
 
