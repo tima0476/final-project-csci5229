@@ -374,6 +374,7 @@ void GeometryEngine::drawTreeGeometry(QOpenGLShaderProgram *program)
 
         // Draw it (i.e., spew our chunks)
         for (int j = 0; j < facetChunk[i].size(); j++)
+            // this works because the vertex array was built sequentially and doesn't need random indexing
             glDrawArrays(GL_TRIANGLE_STRIP, facetChunk[i][j].base, facetChunk[i][j].count);
     }
 }
